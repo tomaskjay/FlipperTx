@@ -31,7 +31,7 @@ requirements can be appended without renumbering.
 | REQ-015 | Workflow | `STOP` shall only be accepted while Armed or Running. |
 | REQ-016 | Workflow | A rejected action shall not be sent to the device — rejection is decided locally before any transport I/O occurs. |
 | REQ-017 | Workflow | A lost connection (transport failure or explicit disconnect) shall force the state machine to Disconnected immediately, regardless of the state it was in. |
-| REQ-018 | Workflow | A device-reported error (`ERROR` response) or a communication failure occurring in any state other than Disconnected shall transition the state machine to a distinct Fault state, preserving the reason, rather than a generic disconnect. |
+| REQ-018 | Workflow | A device-reported error (`ERROR` response) received in any state other than Disconnected shall transition the state machine to a distinct Fault state, preserving the reason — distinct from a communication failure (REQ-017), which forces Disconnected instead, since losing the ability to talk to the device is not the same thing as the device reporting it is in a bad state. |
 | REQ-019 | Workflow | A device response that does not match a valid transition for the current state shall be ignored, leaving the current state unchanged. |
 | REQ-020 | Workflow | The plan ID established at `LOAD_PLAN` shall be preserved through every subsequent state (PlanLoaded, Armed, Running, Complete, Stopped) until the next disconnect. |
 | REQ-021 | Workflow | `PROGRESS` updates received while Running shall update the current percent-complete without changing state. |

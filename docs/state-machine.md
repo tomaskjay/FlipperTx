@@ -24,16 +24,18 @@ Disconnected --CONNECTED--> Connected --PLAN_LOADED--> PlanLoaded --READY--> Arm
                                                                        │                 │
                                                                        └────STOPPED──────┴──────────────────────────> Stopped
 
-any state except Disconnected --ERROR or comm failure--> Fault
-any state --explicit disconnect or comm failure--> Disconnected
+any state except Disconnected --device ERROR response--> Fault
+any state --explicit disconnect or communication failure--> Disconnected
 ```
 
-Two independent triggers can force `Disconnected` from *anywhere*, including
-`Fault`, `Complete`, or `Stopped`: an explicit disconnect, or a communication
-failure that isn't attributable to a specific in-flight command (REQ-017).
-`Fault` is the one exception — a comm failure or `ERROR` response that occurs
-*during* a request is classified as `Fault`, not a generic disconnect
-(REQ-018), so the reason is preserved rather than silently lost.
+Only a device-reported `ERROR` *response* — the device replying while the
+connection itself is still working — leads to `Fault` (REQ-018). Everything
+else that goes wrong (a timeout, an I/O error, an unexpected disconnect —
+anything where the device stops being reachable at all) forces `Disconnected`
+instead, from *anywhere*, including from `Fault`, `Complete`, or `Stopped`
+(REQ-017). The distinction is deliberate: `Fault` means the device told us
+something is wrong; `Disconnected` means we lost the ability to ask it
+anything, so we cannot honestly claim to know its state.
 
 ## Two kinds of transition
 
@@ -84,13 +86,14 @@ re-specified.
 
 ### Forced transitions (not driven by a response at all)
 
-- `OnDisconnected()` — called by `TreatmentSession` on any communication
-  failure not tied to a specific command's own reply, and on explicit
+- `OnDisconnected()` — called by `TreatmentSession` on **every** communication
+  failure (a timeout, an I/O error, or an unexpected disconnect, whether
+  during a request's own send/read or otherwise), and on explicit
   disconnect/dispose. Unconditionally sets `CurrentState` to `Disconnected`,
-  regardless of the prior state (REQ-017).
-- A communication failure *during* a request's own send/read, or a device
-  `ERROR` response, transitions to `Fault(reason)` instead (REQ-018) — see
-  `TreatmentSession.ExecuteAsync`/`ReadAndProcessOneResponseAsync`.
+  regardless of the prior state (REQ-017) — see
+  `TreatmentSession.ExecuteAsync`/`ReadAndProcessOneResponseAsync`, both of
+  which call this, never `OnResponse`, when the transport itself fails.
+  `Fault` is never reached this way.
 
 ## Notes
 

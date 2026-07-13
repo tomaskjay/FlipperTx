@@ -42,8 +42,8 @@ Enforced entirely by `TreatmentWorkflow` (`MedDeviceSim.Workflow`), independent 
 - `ARM` is rejected unless a plan has been loaded.
 - `START` is rejected unless the device is armed.
 - `LOAD_PLAN` is rejected while running.
-- A lost connection immediately forces `Disconnected`, regardless of prior state.
-- A device-reported error or a communication failure forces a distinct `Fault` state, not just a generic disconnect — so the reason is preserved and visible, not silently lost.
+- A lost connection — any communication failure, not just an explicit disconnect — immediately forces `Disconnected`, regardless of prior state.
+- A device-reported error (the device replying while still reachable) forces a distinct `Fault` state instead, preserving the reason — reserved specifically for the device telling us something is wrong, not for losing the ability to talk to it at all. See [`docs/state-machine.md`](docs/state-machine.md) for the full transition set.
 
 ## Protocol
 
