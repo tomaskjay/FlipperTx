@@ -4,6 +4,27 @@ A C# WinForms application that simulates clinical control software for a medical
 
 **This is a portfolio and learning project. It is not clinical software, is not QMS-compliant, is not FDA-regulated, and must never be used for or represented as suitable for real medical/clinical purposes.** The Flipper Zero is simplified test hardware standing in for a real therapeutic device — it has no relationship to any real medical device.
 
+## Screenshots
+
+<table>
+<tr>
+<td width="50%">
+
+**A treatment mid-run**, connected to `MedDeviceSim.Simulator` over TCP — live progress bar, timestamped event log, and workflow state (with plan ID and percent complete) all updating without further input.
+
+![WinForms UI showing a treatment 25% through a run, with the progress bar filled and the event log tracking every sent command and received response](docs/images/ui-running.png)
+
+</td>
+<td width="50%">
+
+**A full run to completion** — the event log shows the entire `CONNECT` → `Complete` exchange against the simulator, one line per command sent and response received.
+
+![WinForms UI after a treatment has reached Complete, showing the full CONNECT through COMPLETE exchange in the event log](docs/images/ui-complete.png)
+
+</td>
+</tr>
+</table>
+
 ## What this demonstrates
 
 - C# / .NET application development, including WinForms desktop UI
