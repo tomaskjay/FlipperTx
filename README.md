@@ -86,9 +86,17 @@ The WinForms UI itself has been manually driven and verified against real hardwa
 ## Known limitations
 
 - **`GET_STATUS` is not wired up end-to-end.** `DeviceCommand.GetStatus` exists, but `TreatmentWorkflow` never got a corresponding request method, since a status query doesn't fit the "valid from exactly one state" pattern the other commands share. Not yet resolved.
-- **No formal requirements/protocol/design documentation yet** beyond this README and inline code comments.
+- **Formal design documentation is still in progress.** See [Documentation](#documentation) below for what exists so far.
 
 Since the real Flipper Zero's stock CLI doesn't understand this custom protocol, the stock-hardware path can never move past `Connected` (`CONNECT` gets an unrecognized-command reply, not `CONNECTED`). To get a full `Connected → Complete` run against something real, `MedDeviceSim.Simulator` implements the protocol statefully (`SimulatedDeviceServer`, hosted standalone by `MedDeviceSim.Simulator.Host`), paired with `TcpTransport`, a second `ITransport` implementation alongside `SerialTransport`. The WinForms UI now runs a complete workflow — including live `PROGRESS` updates — against this simulator over a real TCP socket.
+
+## Documentation
+
+Lightweight, requirements-driven documentation, in progress:
+
+- [`docs/requirements.md`](docs/requirements.md) — numbered requirements (`REQ-NNN`), extracted from behavior already implemented and tested, not aspirational.
+
+More to come: protocol spec, state-transition doc, architecture/design decisions, test procedures, and a requirements-to-tests traceability matrix.
 
 ## Notable engineering findings along the way
 
