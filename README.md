@@ -95,8 +95,9 @@ Since the real Flipper Zero's stock CLI doesn't understand this custom protocol,
 Lightweight, requirements-driven documentation, in progress:
 
 - [`docs/requirements.md`](docs/requirements.md) — numbered requirements (`REQ-NNN`), extracted from behavior already implemented and tested, not aspirational.
+- [`docs/protocol-spec.md`](docs/protocol-spec.md) — the command/response wire protocol: framing, commands, responses, error format, and known gaps.
 
-More to come: protocol spec, state-transition doc, architecture/design decisions, test procedures, and a requirements-to-tests traceability matrix.
+More to come: state-transition doc, architecture/design decisions, test procedures, and a requirements-to-tests traceability matrix.
 
 ## Notable engineering findings along the way
 
