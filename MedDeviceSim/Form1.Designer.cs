@@ -27,6 +27,7 @@ namespace MedDeviceSim
         private System.Windows.Forms.Button disconnectButton;
         private System.Windows.Forms.Label transportStatusLabel;
         private System.Windows.Forms.Label stateLabel;
+        private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.TextBox planIdTextBox;
         private System.Windows.Forms.Button loadPlanButton;
         private System.Windows.Forms.Button armButton;
@@ -46,6 +47,7 @@ namespace MedDeviceSim
             disconnectButton = new Button();
             transportStatusLabel = new Label();
             stateLabel = new Label();
+            progressBar = new ProgressBar();
             planIdTextBox = new TextBox();
             loadPlanButton = new Button();
             armButton = new Button();
@@ -101,21 +103,31 @@ namespace MedDeviceSim
             stateLabel.TabIndex = 4;
             stateLabel.Text = "Workflow: Disconnected";
             //
+            // progressBar
+            //
+            progressBar.Location = new Point(12, 95);
+            progressBar.Maximum = 100;
+            progressBar.Minimum = 0;
+            progressBar.Name = "progressBar";
+            progressBar.Size = new Size(342, 20);
+            progressBar.TabIndex = 5;
+            progressBar.Visible = false;
+            //
             // planIdTextBox
             //
-            planIdTextBox.Location = new Point(12, 100);
+            planIdTextBox.Location = new Point(12, 125);
             planIdTextBox.Name = "planIdTextBox";
             planIdTextBox.PlaceholderText = "Plan ID";
             planIdTextBox.Size = new Size(150, 23);
-            planIdTextBox.TabIndex = 5;
+            planIdTextBox.TabIndex = 6;
             //
             // loadPlanButton
             //
             loadPlanButton.Enabled = false;
-            loadPlanButton.Location = new Point(168, 100);
+            loadPlanButton.Location = new Point(168, 125);
             loadPlanButton.Name = "loadPlanButton";
             loadPlanButton.Size = new Size(90, 23);
-            loadPlanButton.TabIndex = 6;
+            loadPlanButton.TabIndex = 7;
             loadPlanButton.Text = "Load Plan";
             loadPlanButton.UseVisualStyleBackColor = true;
             loadPlanButton.Click += loadPlanButton_Click;
@@ -123,10 +135,10 @@ namespace MedDeviceSim
             // armButton
             //
             armButton.Enabled = false;
-            armButton.Location = new Point(12, 130);
+            armButton.Location = new Point(12, 155);
             armButton.Name = "armButton";
             armButton.Size = new Size(80, 23);
-            armButton.TabIndex = 7;
+            armButton.TabIndex = 8;
             armButton.Text = "Arm";
             armButton.UseVisualStyleBackColor = true;
             armButton.Click += armButton_Click;
@@ -134,10 +146,10 @@ namespace MedDeviceSim
             // startButton
             //
             startButton.Enabled = false;
-            startButton.Location = new Point(98, 130);
+            startButton.Location = new Point(98, 155);
             startButton.Name = "startButton";
             startButton.Size = new Size(80, 23);
-            startButton.TabIndex = 8;
+            startButton.TabIndex = 9;
             startButton.Text = "Start";
             startButton.UseVisualStyleBackColor = true;
             startButton.Click += startButton_Click;
@@ -145,10 +157,10 @@ namespace MedDeviceSim
             // stopButton
             //
             stopButton.Enabled = false;
-            stopButton.Location = new Point(184, 130);
+            stopButton.Location = new Point(184, 155);
             stopButton.Name = "stopButton";
             stopButton.Size = new Size(80, 23);
-            stopButton.TabIndex = 9;
+            stopButton.TabIndex = 10;
             stopButton.Text = "Stop";
             stopButton.UseVisualStyleBackColor = true;
             stopButton.Click += stopButton_Click;
@@ -156,13 +168,13 @@ namespace MedDeviceSim
             // eventLogTextBox
             //
             eventLogTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            eventLogTextBox.Location = new Point(12, 165);
+            eventLogTextBox.Location = new Point(12, 190);
             eventLogTextBox.Multiline = true;
             eventLogTextBox.Name = "eventLogTextBox";
             eventLogTextBox.ReadOnly = true;
             eventLogTextBox.ScrollBars = ScrollBars.Vertical;
-            eventLogTextBox.Size = new Size(776, 273);
-            eventLogTextBox.TabIndex = 10;
+            eventLogTextBox.Size = new Size(776, 248);
+            eventLogTextBox.TabIndex = 11;
             //
             // Form1
             //
@@ -173,6 +185,7 @@ namespace MedDeviceSim
             Controls.Add(disconnectButton);
             Controls.Add(transportStatusLabel);
             Controls.Add(stateLabel);
+            Controls.Add(progressBar);
             Controls.Add(planIdTextBox);
             Controls.Add(loadPlanButton);
             Controls.Add(armButton);

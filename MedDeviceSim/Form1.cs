@@ -191,7 +191,22 @@ namespace MedDeviceSim
                 ? $"Transport: Open on {portComboBox.SelectedItem}"
                 : "Transport: Closed";
 
-            stateLabel.Text = $"Workflow: {_session?.CurrentState.GetType().Name ?? "Disconnected"}";
+            // TreatmentState's cases are records, so ToString() already
+            // includes their data (plan ID, percent complete, fault
+            // reason) for free - same trick used for DeviceResponse in the
+            // event log.
+            TreatmentState state = _session?.CurrentState ?? new TreatmentState.Disconnected();
+            stateLabel.Text = $"Workflow: {state}";
+
+            if (state is TreatmentState.Running running)
+            {
+                progressBar.Visible = true;
+                progressBar.Value = Math.Clamp(running.PercentComplete, 0, 100);
+            }
+            else
+            {
+                progressBar.Visible = false;
+            }
         }
 
         // Ties each action button's availability to the workflow state that
