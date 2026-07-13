@@ -182,6 +182,7 @@ namespace MedDeviceSim
             Name = "Form1";
             Text = "Medical Device Control Simulator";
             Load += Form1_Load;
+            FormClosing += Form1_FormClosing;
             ResumeLayout(false);
             PerformLayout();
         }

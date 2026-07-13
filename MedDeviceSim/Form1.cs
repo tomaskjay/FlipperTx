@@ -25,6 +25,16 @@ namespace MedDeviceSim
             UpdateButtonStates();
         }
 
+        // Without this, closing the window while connected would leak the
+        // TreatmentSession (and the underlying COM port) rather than
+        // closing it - relying on the GC to eventually finalize a real OS
+        // resource like a COM port is not something to depend on.
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _session?.Dispose();
+            _session = null;
+        }
+
         private async void connectButton_Click(object sender, EventArgs e)
         {
             if (portComboBox.SelectedItem is not string portName)
