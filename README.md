@@ -77,9 +77,9 @@ dotnet run --project MedDeviceSim
 
 ## Testing
 
-57 automated tests across the library projects — pure logic (protocol parsing, state transitions, formatting) requiring no hardware, plus integration tests against `FakeTransport`, a controllable test double that scripts device responses and can simulate timeouts, malformed lines, device errors, and unexpected disconnects.
+68 automated tests across the library projects — pure logic (protocol parsing, state transitions, formatting) requiring no hardware, integration tests against `FakeTransport` (a controllable test double simulating timeouts, malformed lines, device errors, and disconnects), and integration tests against `MedDeviceSim.Simulator`'s real, independently-implemented protocol-aware device over a real TCP socket.
 
-Two additional tests are hardware-gated (`[Fact(Skip = "requires a real Flipper Zero connected via USB")]`) and are run manually, with the Flipper connected, by temporarily removing the `Skip` attribute. They verify the transport layer against real hardware directly.
+Two additional tests are hardware-gated (`[Fact(Skip = "requires a real Flipper Zero connected via USB")]`) and are run manually, with the Flipper connected. See [`docs/test-procedures.md`](docs/test-procedures.md) for exactly how to run these, what each test project covers, and the manual UI verification procedure.
 
 The WinForms UI itself has been manually driven and verified against real hardware (via Windows UI Automation, not just visual inspection) for the connect/disconnect flow, event logging, and resource cleanup on close.
 
@@ -98,8 +98,9 @@ Lightweight, requirements-driven documentation, in progress:
 - [`docs/protocol-spec.md`](docs/protocol-spec.md) — the command/response wire protocol: framing, commands, responses, error format, and known gaps.
 - [`docs/state-machine.md`](docs/state-machine.md) — `TreatmentWorkflow`'s states and every transition, split into request validation vs. response-driven change.
 - [`docs/architecture-decisions.md`](docs/architecture-decisions.md) — why the codebase is layered and built the way it is, decision by decision.
+- [`docs/test-procedures.md`](docs/test-procedures.md) — how to run the automated suite, what each test project covers, and manual verification procedures (hardware-gated tests, UI against the simulator and real hardware).
 
-More to come: test procedures and a requirements-to-tests traceability matrix.
+More to come: a requirements-to-tests traceability matrix.
 
 ## Notable engineering findings along the way
 
