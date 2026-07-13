@@ -5,6 +5,19 @@ namespace MedDeviceSim.Session.Tests;
 // A controllable test double, not a "smart" simulated device - a test
 // scripts exactly what ReadLineAsync should return next via EnqueueLine,
 // and can inspect SentText afterward to verify what was actually sent.
+//
+// DEFERRED (deliberately, not forgotten): a fuller protocol-aware simulated
+// device - one that tracks its own state and responds contextually to
+// whatever is actually sent (e.g. genuinely rejecting ARM without a loaded
+// plan, the way a real device should) - was considered for Phase 5 and
+// explicitly deferred. This FakeTransport already provides real automated
+// coverage of every fault scenario the project spec called out (timeouts,
+// malformed responses, device errors, unexpected disconnects, partial/
+// combined messages - the latter two covered at the LineReader level). A
+// protocol-aware simulator remains a reasonable future addition - useful
+// for less-scripted end-to-end tests, and as a possible reference/prototype
+// for a real companion Flipper app - but isn't a blocker for anything built
+// on top of TreatmentSession going forward.
 public sealed class FakeTransport : ITransport
 {
     private readonly Queue<string> _linesToReturn = new();
