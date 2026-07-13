@@ -1,5 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\MedDeviceSim.Session\MedDeviceSim.Session.csproj" />
+    <ProjectReference Include="..\MedDeviceSim.Communication\MedDeviceSim.Communication.csproj" />
+    <ProjectReference Include="..\MedDeviceSim.Workflow\MedDeviceSim.Workflow.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
