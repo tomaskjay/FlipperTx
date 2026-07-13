@@ -21,6 +21,8 @@
   <ItemGroup>
     <ProjectReference Include="..\MedDeviceSim.Simulator\MedDeviceSim.Simulator.csproj" />
     <ProjectReference Include="..\MedDeviceSim.Communication\MedDeviceSim.Communication.csproj" />
+    <ProjectReference Include="..\MedDeviceSim.Session\MedDeviceSim.Session.csproj" />
+    <ProjectReference Include="..\MedDeviceSim.Workflow\MedDeviceSim.Workflow.csproj" />
   </ItemGroup>
 
 </Project>

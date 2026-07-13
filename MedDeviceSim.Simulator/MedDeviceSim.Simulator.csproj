@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MedDeviceSim.Communication\MedDeviceSim.Communication.csproj" />
+    <ProjectReference Include="..\MedDeviceSim.Workflow\MedDeviceSim.Workflow.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

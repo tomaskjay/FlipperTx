@@ -1,0 +1,65 @@
+using MedDeviceSim.Communication;
+using MedDeviceSim.Session;
+using MedDeviceSim.Simulator;
+using MedDeviceSim.Workflow;
+
+namespace MedDeviceSim.Simulator.Tests;
+
+// The flagship test this checkpoint exists for: TreatmentSession and
+// TreatmentWorkflow (the host side, built in Phases 3-5) driven against
+// SimulatedDeviceServer (the device side, built independently in this
+// phase) over a real TCP socket. Two separately-reasoned-about
+// implementations of the same protocol agreeing is a meaningfully stronger
+// proof than either one tested alone.
+public class TreatmentSessionAgainstSimulatorTests
+{
+    [Fact]
+    public async Task FullHappyPath_ConnectThroughRunning_AgainstRealSimulator()
+    {
+        await using var server = new SimulatedDeviceServer();
+        server.Start();
+
+        var transport = new TcpTransport("127.0.0.1", server.Port);
+        using var session = new TreatmentSession(transport);
+
+        await session.OpenAsync();
+
+        SessionResult connectResult = await session.ConnectAsync();
+        Assert.IsType<SessionResult.Sent>(connectResult);
+        Assert.IsType<TreatmentState.Connected>(session.CurrentState);
+
+        SessionResult loadPlanResult = await session.LoadPlanAsync("plan-1");
+        Assert.IsType<SessionResult.Sent>(loadPlanResult);
+        var planLoaded = Assert.IsType<TreatmentState.PlanLoaded>(session.CurrentState);
+        Assert.Equal("plan-1", planLoaded.PlanId);
+
+        await session.ArmAsync();
+        var armed = Assert.IsType<TreatmentState.Armed>(session.CurrentState);
+        Assert.Equal("plan-1", armed.PlanId);
+
+        await session.StartAsync();
+        var running = Assert.IsType<TreatmentState.Running>(session.CurrentState);
+        Assert.Equal("plan-1", running.PlanId);
+    }
+
+    [Fact]
+    public async Task ArmAsync_WithoutPlanLoaded_IsRejectedByWorkflow_NeverReachesSimulator()
+    {
+        await using var server = new SimulatedDeviceServer();
+        server.Start();
+
+        var transport = new TcpTransport("127.0.0.1", server.Port);
+        using var session = new TreatmentSession(transport);
+
+        await session.OpenAsync();
+        await session.ConnectAsync();
+
+        SessionResult result = await session.ArmAsync();
+
+        Assert.IsType<SessionResult.Rejected>(result);
+        // Still Connected, not something the simulator would have said -
+        // confirms TreatmentWorkflow rejected this locally, matching REQ:
+        // the UI (and everything above the workflow) cannot bypass it.
+        Assert.IsType<TreatmentState.Connected>(session.CurrentState);
+    }
+}
