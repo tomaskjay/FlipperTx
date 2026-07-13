@@ -9,6 +9,8 @@ namespace MedDeviceSim
     {
         private TreatmentSession? _session;
         private string? _connectionDescription;
+        private CancellationTokenSource? _updateLoopCts;
+        private Task? _updateLoopTask;
 
         public Form1()
         {
@@ -32,6 +34,11 @@ namespace MedDeviceSim
         // resource like a COM port or socket is not something to depend on.
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            // Best-effort signal only - the form is closing regardless, so
+            // there's no point awaiting the update loop's full shutdown
+            // here (that would require an async handler for a rare edge
+            // case: closing the window mid-run).
+            _updateLoopCts?.Cancel();
             _session?.Dispose();
             _session = null;
         }
@@ -118,8 +125,9 @@ namespace MedDeviceSim
             }
         }
 
-        private void disconnectButton_Click(object sender, EventArgs e)
+        private async void disconnectButton_Click(object sender, EventArgs e)
         {
+            await StopUpdateLoopAsync();
             _session?.Dispose();
             _session = null;
             UpdateLabels();
@@ -175,6 +183,14 @@ namespace MedDeviceSim
             }
 
             await ExecuteActionAsync("START", () => _session.StartAsync());
+
+            // PROGRESS/COMPLETE now arrive on their own - start watching for
+            // them so the UI reflects them without another button click.
+            if (_session.CurrentState is TreatmentState.Running)
+            {
+                _updateLoopCts = new CancellationTokenSource();
+                _updateLoopTask = ObserveUpdatesAsync(_session, _updateLoopCts.Token);
+            }
         }
 
         private async void stopButton_Click(object sender, EventArgs e)
@@ -184,7 +200,65 @@ namespace MedDeviceSim
                 return;
             }
 
+            // TreatmentSession only supports one caller reading at a time -
+            // the update loop's in-flight read must fully finish before
+            // StopAsync sends STOP and reads its reply, or the two could
+            // race on the same transport.
+            await StopUpdateLoopAsync();
             await ExecuteActionAsync("STOP", () => _session.StopAsync());
+        }
+
+        // Watches for PROGRESS/COMPLETE arriving unprompted while Running.
+        // Takes the session as a parameter rather than reading the _session
+        // field, so this keeps working safely against the session it was
+        // started for even if _session is reassigned by a concurrent
+        // disconnect - callers cancel and await this loop before touching
+        // the transport again (see StopUpdateLoopAsync).
+        private async Task ObserveUpdatesAsync(TreatmentSession session, CancellationToken cancellationToken)
+        {
+            try
+            {
+                while (session.CurrentState is TreatmentState.Running)
+                {
+                    SessionResult result = await session.ReadNextUpdateAsync(cancellationToken);
+                    LogUpdate(result);
+                    UpdateLabels();
+                    UpdateButtonStates();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Stop or disconnect requested this - expected, not an error.
+            }
+        }
+
+        // Cancels the update loop and waits for it to fully finish before
+        // returning. Cancellation isn't instant: both transports use a
+        // 2-second ReadTimeout, and a blocked synchronous Read() can't be
+        // interrupted mid-call - it only unwinds at the next timeout tick.
+        private async Task StopUpdateLoopAsync()
+        {
+            if (_updateLoopCts is null)
+            {
+                return;
+            }
+
+            _updateLoopCts.Cancel();
+
+            if (_updateLoopTask is not null)
+            {
+                try
+                {
+                    await _updateLoopTask;
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }
+
+            _updateLoopCts.Dispose();
+            _updateLoopCts = null;
+            _updateLoopTask = null;
         }
 
         // Shared by all four action buttons: log the attempt, run it, log
@@ -211,6 +285,21 @@ namespace MedDeviceSim
                     break;
                 case SessionResult.CommunicationFailed failed:
                     Log($"Sent: {actionName}");
+                    Log($"Communication failed: {failed.Reason}");
+                    break;
+            }
+        }
+
+        // Separate from LogResult: an update was never "sent" by us, so
+        // reusing that phrasing here would be misleading.
+        private void LogUpdate(SessionResult result)
+        {
+            switch (result)
+            {
+                case SessionResult.Sent sent:
+                    Log($"Received: {sent.Response}");
+                    break;
+                case SessionResult.CommunicationFailed failed:
                     Log($"Communication failed: {failed.Reason}");
                     break;
             }
