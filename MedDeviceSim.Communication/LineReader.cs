@@ -23,7 +23,29 @@ public sealed class LineReader
     {
         while (_completedLines.Count == 0)
         {
-            int bytesRead = await _stream.ReadAsync(_readBuffer, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Stream.ReadAsync's CancellationToken is not reliably honored
+            // by SerialStream (confirmed by direct probe against real
+            // hardware: a call hung 45+ seconds past a 2-second token).
+            // The synchronous Read, however, does reliably respect
+            // ReadTimeout, so we fall back to that via Task.Run and poll
+            // between chunks - the same pattern Phase 1's console
+            // experiments used successfully.
+            int bytesRead;
+            try
+            {
+                bytesRead = await Task.Run(
+                    () => _stream.Read(_readBuffer, 0, _readBuffer.Length),
+                    cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                // No data arrived within the stream's ReadTimeout; loop
+                // back so the cancellation check above gets another chance.
+                continue;
+            }
+
             if (bytesRead == 0)
             {
                 throw new IOException("Stream ended while waiting for a complete line.");

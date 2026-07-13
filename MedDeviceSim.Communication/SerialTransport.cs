@@ -47,8 +47,13 @@ public sealed class SerialTransport : IDisposable
 
     public async Task SendAsync(string text, CancellationToken cancellationToken = default)
     {
+        // Same reasoning as LineReader.ReadLineAsync: Stream.WriteAsync's
+        // CancellationToken is not verified to be honored by SerialStream
+        // (inferred from the confirmed ReadAsync gap, not separately
+        // tested), so we fall back to the synchronous Write via Task.Run,
+        // which reliably respects WriteTimeout.
         byte[] bytes = _port.Encoding.GetBytes(text);
-        await _port.BaseStream.WriteAsync(bytes, cancellationToken);
+        await Task.Run(() => _port.BaseStream.Write(bytes, 0, bytes.Length), cancellationToken);
     }
 
     public Task<string> ReadLineAsync(CancellationToken cancellationToken = default)
