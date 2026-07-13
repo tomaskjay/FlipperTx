@@ -27,6 +27,12 @@ namespace MedDeviceSim
         private System.Windows.Forms.Button disconnectButton;
         private System.Windows.Forms.Label transportStatusLabel;
         private System.Windows.Forms.Label stateLabel;
+        private System.Windows.Forms.TextBox planIdTextBox;
+        private System.Windows.Forms.Button loadPlanButton;
+        private System.Windows.Forms.Button armButton;
+        private System.Windows.Forms.Button startButton;
+        private System.Windows.Forms.Button stopButton;
+        private System.Windows.Forms.TextBox eventLogTextBox;
 
         /// <summary>
         ///  Required method for Designer support - do not modify
@@ -40,6 +46,12 @@ namespace MedDeviceSim
             disconnectButton = new Button();
             transportStatusLabel = new Label();
             stateLabel = new Label();
+            planIdTextBox = new TextBox();
+            loadPlanButton = new Button();
+            armButton = new Button();
+            startButton = new Button();
+            stopButton = new Button();
+            eventLogTextBox = new TextBox();
             SuspendLayout();
             //
             // portComboBox
@@ -89,6 +101,69 @@ namespace MedDeviceSim
             stateLabel.TabIndex = 4;
             stateLabel.Text = "Workflow: Disconnected";
             //
+            // planIdTextBox
+            //
+            planIdTextBox.Location = new Point(12, 100);
+            planIdTextBox.Name = "planIdTextBox";
+            planIdTextBox.PlaceholderText = "Plan ID";
+            planIdTextBox.Size = new Size(150, 23);
+            planIdTextBox.TabIndex = 5;
+            //
+            // loadPlanButton
+            //
+            loadPlanButton.Enabled = false;
+            loadPlanButton.Location = new Point(168, 100);
+            loadPlanButton.Name = "loadPlanButton";
+            loadPlanButton.Size = new Size(90, 23);
+            loadPlanButton.TabIndex = 6;
+            loadPlanButton.Text = "Load Plan";
+            loadPlanButton.UseVisualStyleBackColor = true;
+            loadPlanButton.Click += loadPlanButton_Click;
+            //
+            // armButton
+            //
+            armButton.Enabled = false;
+            armButton.Location = new Point(12, 130);
+            armButton.Name = "armButton";
+            armButton.Size = new Size(80, 23);
+            armButton.TabIndex = 7;
+            armButton.Text = "Arm";
+            armButton.UseVisualStyleBackColor = true;
+            armButton.Click += armButton_Click;
+            //
+            // startButton
+            //
+            startButton.Enabled = false;
+            startButton.Location = new Point(98, 130);
+            startButton.Name = "startButton";
+            startButton.Size = new Size(80, 23);
+            startButton.TabIndex = 8;
+            startButton.Text = "Start";
+            startButton.UseVisualStyleBackColor = true;
+            startButton.Click += startButton_Click;
+            //
+            // stopButton
+            //
+            stopButton.Enabled = false;
+            stopButton.Location = new Point(184, 130);
+            stopButton.Name = "stopButton";
+            stopButton.Size = new Size(80, 23);
+            stopButton.TabIndex = 9;
+            stopButton.Text = "Stop";
+            stopButton.UseVisualStyleBackColor = true;
+            stopButton.Click += stopButton_Click;
+            //
+            // eventLogTextBox
+            //
+            eventLogTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            eventLogTextBox.Location = new Point(12, 165);
+            eventLogTextBox.Multiline = true;
+            eventLogTextBox.Name = "eventLogTextBox";
+            eventLogTextBox.ReadOnly = true;
+            eventLogTextBox.ScrollBars = ScrollBars.Vertical;
+            eventLogTextBox.Size = new Size(776, 273);
+            eventLogTextBox.TabIndex = 10;
+            //
             // Form1
             //
             AutoScaleMode = AutoScaleMode.Font;
@@ -98,6 +173,12 @@ namespace MedDeviceSim
             Controls.Add(disconnectButton);
             Controls.Add(transportStatusLabel);
             Controls.Add(stateLabel);
+            Controls.Add(planIdTextBox);
+            Controls.Add(loadPlanButton);
+            Controls.Add(armButton);
+            Controls.Add(startButton);
+            Controls.Add(stopButton);
+            Controls.Add(eventLogTextBox);
             Name = "Form1";
             Text = "Medical Device Control Simulator";
             Load += Form1_Load;
