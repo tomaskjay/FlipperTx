@@ -7,6 +7,10 @@ public sealed class SerialTransport : IDisposable
 {
     private readonly SerialPort _port;
 
+    // Can't be constructed until the port is open (SerialPort.BaseStream
+    // throws before then), so this starts null and is created in OpenAsync.
+    private LineReader? _lineReader;
+
     public SerialTransport(string portName, int baudRate = 115200)
     {
         _port = new SerialPort(portName, baudRate, Parity.None, 8, StopBits.One)
@@ -32,6 +36,8 @@ public sealed class SerialTransport : IDisposable
         // defaults this to false.
         _port.DtrEnable = true;
 
+        _lineReader = new LineReader(_port.BaseStream);
+
         return Task.CompletedTask;
     }
 
@@ -39,6 +45,16 @@ public sealed class SerialTransport : IDisposable
     {
         byte[] bytes = _port.Encoding.GetBytes(text);
         await _port.BaseStream.WriteAsync(bytes, cancellationToken);
+    }
+
+    public Task<string> ReadLineAsync(CancellationToken cancellationToken = default)
+    {
+        if (_lineReader is null)
+        {
+            throw new InvalidOperationException($"{nameof(OpenAsync)} must be called before {nameof(ReadLineAsync)}.");
+        }
+
+        return _lineReader.ReadLineAsync(cancellationToken);
     }
 
     public void Dispose()
