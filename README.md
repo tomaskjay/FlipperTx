@@ -1,6 +1,6 @@
 # FlipperTx
 
-A C# WinForms application that simulates clinical control software for a medical device, communicating over a real USB serial connection with a Flipper Zero acting as simplified test hardware. Built as a portfolio/learning project with Claude Code as a guide to develop C#/.NET, Windows desktop, and serial/network hardware interface skills.
+A C# WinForms application that simulates clinical control software for a medical device, communicating over a real USB serial connection with a Flipper Zero acting as simplified test hardware. Built as a portfolio/learning project with Claude as a guide to develop C#/.NET, Windows desktop, and serial/network hardware interface skills.
 
 **Note:** This is a portfolio project that was made for educational purposes, not clinical software.
 
