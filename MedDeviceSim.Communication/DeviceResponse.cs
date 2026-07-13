@@ -11,7 +11,7 @@ public abstract record DeviceResponse
     }
 
     public sealed record Connected : DeviceResponse;
-    public sealed record PlanLoaded : DeviceResponse;
+    public sealed record PlanLoaded(string PlanId) : DeviceResponse;
     public sealed record Ready : DeviceResponse;
     public sealed record Running : DeviceResponse;
     public sealed record Progress(int Percent) : DeviceResponse;
@@ -34,7 +34,7 @@ public abstract record DeviceResponse
         return keyword switch
         {
             "CONNECTED" when rest is null => new Connected(),
-            "PLAN_LOADED" when rest is null => new PlanLoaded(),
+            "PLAN_LOADED" when rest is not null => new PlanLoaded(rest),
             "READY" when rest is null => new Ready(),
             "RUNNING" when rest is null => new Running(),
             "PROGRESS" when rest is not null && int.TryParse(rest, out int percent) => new Progress(percent),

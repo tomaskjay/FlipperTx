@@ -11,9 +11,9 @@ public class DeviceResponseTests
     }
 
     [Fact]
-    public void Parse_PlanLoaded_ReturnsPlanLoaded()
+    public void Parse_PlanLoaded_ReturnsPlanLoadedWithId()
     {
-        Assert.Equal(new DeviceResponse.PlanLoaded(), DeviceResponse.Parse("PLAN_LOADED"));
+        Assert.Equal(new DeviceResponse.PlanLoaded("abc123"), DeviceResponse.Parse("PLAN_LOADED abc123"));
     }
 
     [Fact]
@@ -52,6 +52,7 @@ public class DeviceResponseTests
     [InlineData("PROGRESS")]
     [InlineData("PROGRESS notanumber")]
     [InlineData("CONNECTED extra")]
+    [InlineData("PLAN_LOADED")]
     [InlineData("ERROR")]
     public void Parse_MalformedOrUnrecognizedInput_ReturnsUnknown(string line)
     {
