@@ -25,6 +25,7 @@ namespace MedDeviceSim
         private System.Windows.Forms.ComboBox portComboBox;
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Button disconnectButton;
+        private System.Windows.Forms.Label transportStatusLabel;
         private System.Windows.Forms.Label stateLabel;
 
         /// <summary>
@@ -37,6 +38,7 @@ namespace MedDeviceSim
             portComboBox = new ComboBox();
             connectButton = new Button();
             disconnectButton = new Button();
+            transportStatusLabel = new Label();
             stateLabel = new Label();
             SuspendLayout();
             //
@@ -69,14 +71,23 @@ namespace MedDeviceSim
             disconnectButton.UseVisualStyleBackColor = true;
             disconnectButton.Click += disconnectButton_Click;
             //
+            // transportStatusLabel
+            //
+            transportStatusLabel.AutoSize = true;
+            transportStatusLabel.Location = new Point(12, 50);
+            transportStatusLabel.Name = "transportStatusLabel";
+            transportStatusLabel.Size = new Size(100, 15);
+            transportStatusLabel.TabIndex = 3;
+            transportStatusLabel.Text = "Transport: Closed";
+            //
             // stateLabel
             //
             stateLabel.AutoSize = true;
-            stateLabel.Location = new Point(12, 50);
+            stateLabel.Location = new Point(12, 72);
             stateLabel.Name = "stateLabel";
             stateLabel.Size = new Size(114, 15);
-            stateLabel.TabIndex = 3;
-            stateLabel.Text = "State: Disconnected";
+            stateLabel.TabIndex = 4;
+            stateLabel.Text = "Workflow: Disconnected";
             //
             // Form1
             //
@@ -85,6 +96,7 @@ namespace MedDeviceSim
             Controls.Add(portComboBox);
             Controls.Add(connectButton);
             Controls.Add(disconnectButton);
+            Controls.Add(transportStatusLabel);
             Controls.Add(stateLabel);
             Name = "Form1";
             Text = "Medical Device Control Simulator";

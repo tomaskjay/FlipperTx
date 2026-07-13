@@ -34,6 +34,12 @@ public sealed class TreatmentSession : IDisposable
 
     public TreatmentState CurrentState => _workflow.CurrentState;
 
+    // Whether the underlying transport (the physical COM port) is open -
+    // deliberately separate from CurrentState, which reflects the custom
+    // protocol workflow. A real device that doesn't speak our protocol can
+    // have the transport open while the workflow never reaches Connected.
+    public bool IsOpen => _transport.IsOpen;
+
     // Opens the underlying COM port itself - separate from ConnectAsync(),
     // which sends the CONNECT protocol command. Must be called first; a
     // real SerialTransport's Send/Read would otherwise throw, since the

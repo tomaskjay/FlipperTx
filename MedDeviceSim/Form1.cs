@@ -38,18 +38,31 @@ namespace MedDeviceSim
             try
             {
                 await _session.OpenAsync();
+
+                // Transport is open now, regardless of what happens next -
+                // reflect that immediately, separate from workflow state.
+                UpdateLabels();
+
                 SessionResult result = await _session.ConnectAsync();
-                UpdateStateLabel();
+                UpdateLabels();
 
                 if (result is SessionResult.CommunicationFailed failed)
                 {
+                    // The transport itself failed during the exchange - not
+                    // just "the device didn't understand CONNECT". Treat
+                    // this as a real failure and reset entirely.
                     MessageBox.Show($"Connection failed: {failed.Reason}");
                     _session.Dispose();
                     _session = null;
+                    UpdateLabels();
                     connectButton.Enabled = true;
                     return;
                 }
 
+                // Whether or not the workflow actually reached Connected
+                // (e.g. a real device that doesn't speak our protocol would
+                // leave it at Disconnected), the transport itself is open
+                // and usable, so Disconnect should be available.
                 disconnectButton.Enabled = true;
             }
             catch (Exception ex)
@@ -57,6 +70,7 @@ namespace MedDeviceSim
                 MessageBox.Show($"Could not open {portName}: {ex.Message}");
                 _session?.Dispose();
                 _session = null;
+                UpdateLabels();
                 connectButton.Enabled = true;
             }
         }
@@ -65,14 +79,18 @@ namespace MedDeviceSim
         {
             _session?.Dispose();
             _session = null;
-            UpdateStateLabel();
+            UpdateLabels();
             connectButton.Enabled = true;
             disconnectButton.Enabled = false;
         }
 
-        private void UpdateStateLabel()
+        private void UpdateLabels()
         {
-            stateLabel.Text = $"State: {_session?.CurrentState.GetType().Name ?? "Disconnected"}";
+            transportStatusLabel.Text = _session is { IsOpen: true }
+                ? $"Transport: Open on {portComboBox.SelectedItem}"
+                : "Transport: Closed";
+
+            stateLabel.Text = $"Workflow: {_session?.CurrentState.GetType().Name ?? "Disconnected"}";
         }
     }
 }
