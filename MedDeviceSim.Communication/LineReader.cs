@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Text;
 
 namespace MedDeviceSim.Communication;
@@ -41,8 +42,19 @@ public sealed class LineReader
             }
             catch (TimeoutException)
             {
-                // No data arrived within the stream's ReadTimeout; loop
-                // back so the cancellation check above gets another chance.
+                // SerialStream's shape for "no data within ReadTimeout";
+                // loop back so the cancellation check above gets another
+                // chance.
+                continue;
+            }
+            catch (IOException ex) when (ex.InnerException is SocketException { SocketErrorCode: SocketError.TimedOut })
+            {
+                // NetworkStream's shape for the same condition - verified
+                // necessary when TcpTransport started hanging indefinitely
+                // without it. This does mean LineReader, otherwise
+                // Stream-agnostic on purpose, now has to know about one
+                // Socket-specific exception shape - an acknowledged,
+                // narrow compromise, not an accident.
                 continue;
             }
 

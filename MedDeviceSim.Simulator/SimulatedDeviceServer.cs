@@ -17,11 +17,12 @@ namespace MedDeviceSim.Simulator;
 // stronger test than one where both sides share the same rules by
 // construction.
 //
-// Checkpoint-2 scope: START responds with a single RUNNING, immediately.
-// No autonomous, timed PROGRESS/COMPLETE simulation yet - TreatmentSession
-// can't currently consume unsolicited updates after its one read per
-// action, so building that now would be for a client that can't use it
-// yet. That's checkpoint 3, alongside extending TreatmentSession itself.
+// After START, autonomously emits PROGRESS updates and COMPLETE over time,
+// unprompted - while the same connection's read loop keeps watching for an
+// incoming STOP that should cancel the run early. Two tasks writing to the
+// same stream need synchronization (a SemaphoreSlim, since C#'s lock can't
+// wrap an await) to avoid interleaving bytes and corrupting the line
+// protocol.
 //
 // Handles one client connection at a time, matching how a real device
 // would only have one active session - not a general-purpose concurrent
@@ -29,14 +30,18 @@ namespace MedDeviceSim.Simulator;
 public sealed class SimulatedDeviceServer : IAsyncDisposable
 {
     private readonly TcpListener _listener;
+    private readonly TimeSpan _progressInterval;
     private CancellationTokenSource? _cts;
     private Task? _acceptLoopTask;
 
     // port = 0 lets the OS assign an available port - used by tests to
     // avoid collisions; the standalone host passes an explicit port.
-    public SimulatedDeviceServer(int port = 0)
+    // progressInterval defaults to something realistic for manual/demo use;
+    // tests pass a short interval so they don't take seconds each.
+    public SimulatedDeviceServer(int port = 0, TimeSpan? progressInterval = null)
     {
         _listener = new TcpListener(IPAddress.Loopback, port);
+        _progressInterval = progressInterval ?? TimeSpan.FromSeconds(1);
     }
 
     public int Port => ((IPEndPoint)_listener.LocalEndpoint).Port;
@@ -66,23 +71,85 @@ public sealed class SimulatedDeviceServer : IAsyncDisposable
         }
     }
 
-    private static async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
+    private async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
         using (client)
         {
             NetworkStream stream = client.GetStream();
             var lineReader = new LineReader(stream);
+            var writeLock = new SemaphoreSlim(1, 1);
             TreatmentState state = new TreatmentState.Disconnected();
+            CancellationTokenSource? runCts = null;
+            Task? runTask = null;
+
+            async Task WriteLineAsync(string line, CancellationToken ct)
+            {
+                await writeLock.WaitAsync(ct);
+                try
+                {
+                    byte[] bytes = Encoding.ASCII.GetBytes(line);
+                    await stream.WriteAsync(bytes, ct);
+                }
+                finally
+                {
+                    writeLock.Release();
+                }
+            }
+
+            async Task RunSimulatedTreatmentAsync(string planId, CancellationToken ct)
+            {
+                try
+                {
+                    for (int percent = 25; percent < 100; percent += 25)
+                    {
+                        await Task.Delay(_progressInterval, ct);
+                        await WriteLineAsync($"PROGRESS {percent}\r\n", ct);
+                    }
+
+                    await Task.Delay(_progressInterval, ct);
+                    await WriteLineAsync("COMPLETE\r\n", ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Stopped early, or the connection/server is closing -
+                    // nothing more to send.
+                }
+            }
 
             try
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     string line = await lineReader.ReadLineAsync(cancellationToken);
+                    TreatmentState previousState = state;
                     string response;
                     (state, response) = HandleLine(line, state);
-                    byte[] bytes = Encoding.ASCII.GetBytes(response);
-                    await stream.WriteAsync(bytes, cancellationToken);
+                    await WriteLineAsync(response, cancellationToken);
+
+                    if (previousState is TreatmentState.Running && state is TreatmentState.Stopped && runCts is not null)
+                    {
+                        // STOP interrupted an in-flight run - cancel it so
+                        // it doesn't also try to write PROGRESS/COMPLETE
+                        // after we've already responded STOPPED.
+                        runCts.Cancel();
+                        try
+                        {
+                            await runTask!;
+                        }
+                        catch
+                        {
+                            // The run task's own handling already covers
+                            // the expected cancellation case.
+                        }
+
+                        runCts = null;
+                        runTask = null;
+                    }
+                    else if (state is TreatmentState.Running running && runTask is null)
+                    {
+                        runCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                        runTask = RunSimulatedTreatmentAsync(running.PlanId, runCts.Token);
+                    }
                 }
             }
             catch (IOException)
@@ -92,6 +159,21 @@ public sealed class SimulatedDeviceServer : IAsyncDisposable
             catch (OperationCanceledException)
             {
                 // Server is shutting down.
+            }
+            finally
+            {
+                runCts?.Cancel();
+                if (runTask is not null)
+                {
+                    try
+                    {
+                        await runTask;
+                    }
+                    catch
+                    {
+                        // Best-effort shutdown.
+                    }
+                }
             }
         }
     }

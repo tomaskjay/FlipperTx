@@ -43,6 +43,34 @@ public class TreatmentSessionAgainstSimulatorTests
     }
 
     [Fact]
+    public async Task FullHappyPath_ConnectThroughComplete_AgainstRealSimulator()
+    {
+        await using var server = new SimulatedDeviceServer(progressInterval: TimeSpan.FromMilliseconds(20));
+        server.Start();
+
+        var transport = new TcpTransport("127.0.0.1", server.Port);
+        using var session = new TreatmentSession(transport);
+
+        await session.OpenAsync();
+        await session.ConnectAsync();
+        await session.LoadPlanAsync("plan-1");
+        await session.ArmAsync();
+        await session.StartAsync();
+        Assert.IsType<TreatmentState.Running>(session.CurrentState);
+
+        // PROGRESS/COMPLETE arrive unprompted - loop on ReadNextUpdateAsync
+        // to observe them, with a bound so a real failure shows up as a
+        // clear assertion failure instead of an infinite loop.
+        for (int i = 0; i < 10 && session.CurrentState is not TreatmentState.Complete; i++)
+        {
+            await session.ReadNextUpdateAsync();
+        }
+
+        var complete = Assert.IsType<TreatmentState.Complete>(session.CurrentState);
+        Assert.Equal("plan-1", complete.PlanId);
+    }
+
+    [Fact]
     public async Task ArmAsync_WithoutPlanLoaded_IsRejectedByWorkflow_NeverReachesSimulator()
     {
         await using var server = new SimulatedDeviceServer();

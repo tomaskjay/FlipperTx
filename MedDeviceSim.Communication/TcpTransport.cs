@@ -3,17 +3,25 @@ using System.Text;
 
 namespace MedDeviceSim.Communication;
 
-// Reuses LineReader unmodified - it only depends on Stream, and
+// Reuses LineReader unmodified for reads - it only depends on Stream, and
 // NetworkStream is a Stream, exactly the payoff that dependency was
-// designed for back in Phase 2.
+// designed for back in Phase 2. That reuse also means reads inherit
+// LineReader's Task.Run-wrapped-synchronous-Read approach (originally built
+// around SerialStream's specific behavior), which is only safe if the
+// stream has a real ReadTimeout configured - verified necessary here: an
+// early version without this hung indefinitely and ignored its
+// CancellationToken entirely once no more data was coming, since Task.Run
+// cannot interrupt an already-blocked synchronous call. NetworkStream's
+// read timeout throws IOException, not SerialStream's TimeoutException -
+// LineReader was extended to recognize that shape too.
 //
-// Unlike SerialTransport, this does NOT wrap Read/Write in Task.Run to work
-// around a cancellation bug - NetworkStream's async methods are a
-// long-established, widely-relied-upon part of .NET (unlike SerialStream's
-// older APM-based internals) and are not known to have the same issue.
-// This is a reasonable assumption based on NetworkStream's track record,
-// not something separately verified in isolation the way SerialStream's
-// bug was.
+// SendAsync, unlike SendAsync in SerialTransport, uses genuine
+// WriteAsync directly rather than a Task.Run-wrapped synchronous Write -
+// NetworkStream's async methods are well-established .NET, unlike
+// SerialStream's older internals, and are not known to have the same
+// cancellation gap. Not separately verified in isolation the way
+// SerialStream's bug was, though - a reasonable assumption based on
+// NetworkStream's track record, not a proven fact.
 public sealed class TcpTransport : ITransport
 {
     private readonly string _host;
@@ -33,7 +41,11 @@ public sealed class TcpTransport : ITransport
     {
         _client = new TcpClient();
         await _client.ConnectAsync(_host, _port, cancellationToken);
-        _lineReader = new LineReader(_client.GetStream());
+
+        NetworkStream stream = _client.GetStream();
+        stream.ReadTimeout = 2000;
+        stream.WriteTimeout = 2000;
+        _lineReader = new LineReader(stream);
     }
 
     public async Task SendAsync(string text, CancellationToken cancellationToken = default)

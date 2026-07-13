@@ -63,6 +63,16 @@ public sealed class TreatmentSession : IDisposable
     public Task<SessionResult> StopAsync(CancellationToken cancellationToken = default) =>
         ExecuteAsync(_workflow.RequestStop(), cancellationToken);
 
+    // Waits for and processes the next unsolicited line from the device -
+    // e.g. a PROGRESS update or COMPLETE arriving on its own while Running,
+    // not in direct response to any request. A caller loops on this after
+    // a successful StartAsync() to observe the rest of a run. Still
+    // caller-driven, not a background task - CurrentState only ever
+    // changes on whatever thread the caller is actually running on, same
+    // single-threaded model as every other method here.
+    public Task<SessionResult> ReadNextUpdateAsync(CancellationToken cancellationToken = default) =>
+        ReadAndProcessResponseAsync(cancellationToken);
+
     private async Task<SessionResult> ExecuteAsync(WorkflowResult requestResult, CancellationToken cancellationToken)
     {
         if (requestResult is WorkflowResult.Rejected rejected)
@@ -75,7 +85,24 @@ public sealed class TreatmentSession : IDisposable
         try
         {
             await _transport.SendAsync(accepted.Command.ToWireFormat(), cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is IOException or TimeoutException or OperationCanceledException)
+        {
+            _workflow.OnDisconnected();
+            return new SessionResult.CommunicationFailed(ex.Message);
+        }
 
+        return await ReadAndProcessResponseAsync(cancellationToken);
+    }
+
+    private async Task<SessionResult> ReadAndProcessResponseAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
             string line = await _transport.ReadLineAsync(cancellationToken);
             DeviceResponse response = DeviceResponse.Parse(line);
             _workflow.OnResponse(response);
