@@ -99,8 +99,7 @@ Lightweight, requirements-driven documentation, in progress:
 - [`docs/state-machine.md`](docs/state-machine.md) — `TreatmentWorkflow`'s states and every transition, split into request validation vs. response-driven change.
 - [`docs/architecture-decisions.md`](docs/architecture-decisions.md) — why the codebase is layered and built the way it is, decision by decision.
 - [`docs/test-procedures.md`](docs/test-procedures.md) — how to run the automated suite, what each test project covers, and manual verification procedures (hardware-gated tests, UI against the simulator and real hardware).
-
-More to come: a requirements-to-tests traceability matrix.
+- [`docs/traceability-matrix.md`](docs/traceability-matrix.md) — every requirement mapped to the test(s) that verify it, plus the coverage gaps that fell out of building it (the UI layer has no automated tests).
 
 ## Notable engineering findings along the way
 
