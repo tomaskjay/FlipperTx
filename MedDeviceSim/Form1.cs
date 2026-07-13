@@ -8,6 +8,7 @@ namespace MedDeviceSim
     public partial class Form1 : Form
     {
         private TreatmentSession? _session;
+        private string? _connectionDescription;
 
         public Form1()
         {
@@ -26,26 +27,50 @@ namespace MedDeviceSim
         }
 
         // Without this, closing the window while connected would leak the
-        // TreatmentSession (and the underlying COM port) rather than
+        // TreatmentSession (and the underlying transport) rather than
         // closing it - relying on the GC to eventually finalize a real OS
-        // resource like a COM port is not something to depend on.
+        // resource like a COM port or socket is not something to depend on.
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             _session?.Dispose();
             _session = null;
         }
 
+        private void serialRadioButton_CheckedChanged(object sender, EventArgs e)
+        {
+            portComboBox.Visible = serialRadioButton.Checked;
+            tcpPortTextBox.Visible = !serialRadioButton.Checked;
+        }
+
         private async void connectButton_Click(object sender, EventArgs e)
         {
-            if (portComboBox.SelectedItem is not string portName)
+            ITransport transport;
+
+            if (serialRadioButton.Checked)
             {
-                MessageBox.Show("Select a COM port first.");
-                return;
+                if (portComboBox.SelectedItem is not string portName)
+                {
+                    MessageBox.Show("Select a COM port first.");
+                    return;
+                }
+
+                transport = new SerialTransport(portName);
+                _connectionDescription = portName;
+            }
+            else
+            {
+                if (!int.TryParse(tcpPortTextBox.Text, out int tcpPort))
+                {
+                    MessageBox.Show("Enter a valid TCP port number.");
+                    return;
+                }
+
+                transport = new TcpTransport("127.0.0.1", tcpPort);
+                _connectionDescription = $"127.0.0.1:{tcpPort}";
             }
 
-            connectButton.Enabled = false;
+            SetConnectionControlsEnabled(false);
 
-            var transport = new SerialTransport(portName);
             _session = new TreatmentSession(transport);
 
             try
@@ -55,7 +80,7 @@ namespace MedDeviceSim
                 // Transport is open now, regardless of what happens next -
                 // reflect that immediately, separate from workflow state.
                 UpdateLabels();
-                Log($"Transport opened on {portName}.");
+                Log($"Transport opened on {_connectionDescription}.");
 
                 SessionResult result = await _session.ConnectAsync();
                 UpdateLabels();
@@ -70,7 +95,7 @@ namespace MedDeviceSim
                     _session.Dispose();
                     _session = null;
                     UpdateLabels();
-                    connectButton.Enabled = true;
+                    SetConnectionControlsEnabled(true);
                     UpdateButtonStates();
                     return;
                 }
@@ -84,11 +109,11 @@ namespace MedDeviceSim
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Could not open {portName}: {ex.Message}");
+                MessageBox.Show($"Could not open {_connectionDescription}: {ex.Message}");
                 _session?.Dispose();
                 _session = null;
                 UpdateLabels();
-                connectButton.Enabled = true;
+                SetConnectionControlsEnabled(true);
                 UpdateButtonStates();
             }
         }
@@ -99,9 +124,20 @@ namespace MedDeviceSim
             _session = null;
             UpdateLabels();
             Log("Disconnected.");
-            connectButton.Enabled = true;
+            SetConnectionControlsEnabled(true);
             disconnectButton.Enabled = false;
             UpdateButtonStates();
+        }
+
+        // Can't switch transport type or edit connection details mid-session
+        // - grouped together since they always change as one unit.
+        private void SetConnectionControlsEnabled(bool enabled)
+        {
+            serialRadioButton.Enabled = enabled;
+            tcpRadioButton.Enabled = enabled;
+            portComboBox.Enabled = enabled;
+            tcpPortTextBox.Enabled = enabled;
+            connectButton.Enabled = enabled;
         }
 
         private async void loadPlanButton_Click(object sender, EventArgs e)
@@ -188,7 +224,7 @@ namespace MedDeviceSim
         private void UpdateLabels()
         {
             transportStatusLabel.Text = _session is { IsOpen: true }
-                ? $"Transport: Open on {portComboBox.SelectedItem}"
+                ? $"Transport: Open on {_connectionDescription}"
                 : "Transport: Closed";
 
             // TreatmentState's cases are records, so ToString() already
