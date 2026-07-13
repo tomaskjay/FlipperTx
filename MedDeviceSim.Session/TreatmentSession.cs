@@ -54,13 +54,34 @@ public sealed class TreatmentSession : IDisposable
         }
 
         var accepted = (WorkflowResult.Accepted)requestResult;
-        await _transport.SendAsync(accepted.Command.ToWireFormat(), cancellationToken);
 
-        string line = await _transport.ReadLineAsync(cancellationToken);
-        DeviceResponse response = DeviceResponse.Parse(line);
-        _workflow.OnResponse(response);
+        try
+        {
+            await _transport.SendAsync(accepted.Command.ToWireFormat(), cancellationToken);
 
-        return new SessionResult.Sent(response);
+            string line = await _transport.ReadLineAsync(cancellationToken);
+            DeviceResponse response = DeviceResponse.Parse(line);
+            _workflow.OnResponse(response);
+
+            return new SessionResult.Sent(response);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Our own caller's token fired - deliberate cancellation, not a
+            // communication failure. Propagate normally, matching the
+            // standard .NET convention for cancellation.
+            throw;
+        }
+        catch (Exception ex) when (ex is IOException or TimeoutException or OperationCanceledException)
+        {
+            // Anything else here - a write/read failure, or an
+            // OperationCanceledException NOT caused by our own token (e.g.
+            // a physical disconnect mid-read, per Phase 1's finding) - is a
+            // genuine communication failure. Per spec, this must land in a
+            // defined, safe state, not an undefined one.
+            _workflow.OnDisconnected();
+            return new SessionResult.CommunicationFailed(ex.Message);
+        }
     }
 
     public void Dispose()
