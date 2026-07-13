@@ -15,6 +15,10 @@ public sealed class SerialTransport : IDisposable
     {
         _port = new SerialPort(portName, baudRate, Parity.None, 8, StopBits.One)
         {
+            // Without an explicit ReadTimeout, SerialPort defaults to -1
+            // (wait forever), which would let ReadLineAsync hang
+            // indefinitely if the device never responds.
+            ReadTimeout = 2000,
             WriteTimeout = 2000,
             Encoding = Encoding.ASCII,
         };
