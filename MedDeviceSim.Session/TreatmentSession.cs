@@ -34,6 +34,14 @@ public sealed class TreatmentSession : IDisposable
 
     public TreatmentState CurrentState => _workflow.CurrentState;
 
+    // Opens the underlying COM port itself - separate from ConnectAsync(),
+    // which sends the CONNECT protocol command. Must be called first; a
+    // real SerialTransport's Send/Read would otherwise throw, since the
+    // port was never opened. Fake transports in tests don't check this, so
+    // this gap went unnoticed until a real transport actually needed it.
+    public Task OpenAsync(CancellationToken cancellationToken = default) =>
+        _transport.OpenAsync(cancellationToken);
+
     public Task<SessionResult> ConnectAsync(CancellationToken cancellationToken = default) =>
         ExecuteAsync(_workflow.RequestConnect(), cancellationToken);
 
