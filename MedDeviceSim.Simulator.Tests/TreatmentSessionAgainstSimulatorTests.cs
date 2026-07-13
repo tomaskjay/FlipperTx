@@ -70,6 +70,37 @@ public class TreatmentSessionAgainstSimulatorTests
         Assert.Equal("plan-1", complete.PlanId);
     }
 
+    // Reproduces a bug found via live manual testing: StopAsync() was
+    // consuming an already-queued, unsolicited PROGRESS line as if it were
+    // STOP's own reply, leaving CurrentState stuck on Running instead of
+    // advancing to Stopped. The delay below gives the simulator's
+    // autonomous run task time to write at least one PROGRESS line before
+    // StopAsync ever reads anything, so the read really does have to skip
+    // past it.
+    [Fact]
+    public async Task StopAsync_WhileUnreadProgressIsQueued_StillReachesStopped()
+    {
+        await using var server = new SimulatedDeviceServer(progressInterval: TimeSpan.FromMilliseconds(20));
+        server.Start();
+
+        var transport = new TcpTransport("127.0.0.1", server.Port);
+        using var session = new TreatmentSession(transport);
+
+        await session.OpenAsync();
+        await session.ConnectAsync();
+        await session.LoadPlanAsync("plan-1");
+        await session.ArmAsync();
+        await session.StartAsync();
+
+        await Task.Delay(TimeSpan.FromMilliseconds(100));
+
+        SessionResult result = await session.StopAsync();
+
+        Assert.IsType<SessionResult.Sent>(result);
+        var stopped = Assert.IsType<TreatmentState.Stopped>(session.CurrentState);
+        Assert.Equal("plan-1", stopped.PlanId);
+    }
+
     [Fact]
     public async Task ArmAsync_WithoutPlanLoaded_IsRejectedByWorkflow_NeverReachesSimulator()
     {
