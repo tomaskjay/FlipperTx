@@ -96,8 +96,9 @@ Lightweight, requirements-driven documentation, in progress:
 
 - [`docs/requirements.md`](docs/requirements.md) — numbered requirements (`REQ-NNN`), extracted from behavior already implemented and tested, not aspirational.
 - [`docs/protocol-spec.md`](docs/protocol-spec.md) — the command/response wire protocol: framing, commands, responses, error format, and known gaps.
+- [`docs/state-machine.md`](docs/state-machine.md) — `TreatmentWorkflow`'s states and every transition, split into request validation vs. response-driven change.
 
-More to come: state-transition doc, architecture/design decisions, test procedures, and a requirements-to-tests traceability matrix.
+More to come: architecture/design decisions, test procedures, and a requirements-to-tests traceability matrix.
 
 ## Notable engineering findings along the way
 
