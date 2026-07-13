@@ -5,10 +5,12 @@ namespace MedDeviceSim.Session;
 
 // Bridges the pure TreatmentWorkflow to an ITransport. Option A
 // shape (decided explicitly, not defaulted to): one request/response
-// exchange at a time - send a command, read exactly one line back, parse
-// and feed it to the workflow, return. No persistent background read loop;
-// that's deferred until something concrete (e.g. live UI progress updates)
-// actually needs it, since it would require making TreatmentWorkflow
+// exchange at a time - send a command, read lines (applying any unsolicited
+// PROGRESS/COMPLETE along the way - see ReadCommandReplyAsync) until the
+// actual reply arrives, parse it, feed it to the workflow, return. No
+// persistent background read loop; that's deferred until something
+// concrete (e.g. live progress updates while nothing is actively calling
+// in) actually needs it, since it would require making TreatmentWorkflow
 // thread-safe, which nothing justifies yet.
 //
 // GET_STATUS is intentionally not wired up here - TreatmentWorkflow never
@@ -71,7 +73,7 @@ public sealed class TreatmentSession : IDisposable
     // changes on whatever thread the caller is actually running on, same
     // single-threaded model as every other method here.
     public Task<SessionResult> ReadNextUpdateAsync(CancellationToken cancellationToken = default) =>
-        ReadAndProcessResponseAsync(cancellationToken);
+        ReadAndProcessOneResponseAsync(cancellationToken);
 
     private async Task<SessionResult> ExecuteAsync(WorkflowResult requestResult, CancellationToken cancellationToken)
     {
@@ -96,10 +98,32 @@ public sealed class TreatmentSession : IDisposable
             return new SessionResult.CommunicationFailed(ex.Message);
         }
 
-        return await ReadAndProcessResponseAsync(cancellationToken);
+        return await ReadCommandReplyAsync(cancellationToken);
     }
 
-    private async Task<SessionResult> ReadAndProcessResponseAsync(CancellationToken cancellationToken)
+    // After sending a command, the next line off the wire might instead be
+    // an unsolicited PROGRESS/COMPLETE that the device wrote on its own
+    // schedule while nothing was reading (confirmed live: STOP's reply sat
+    // behind an already-queued PROGRESS line, and the naive one-line read
+    // consumed the PROGRESS line as if it were STOP's reply). PROGRESS and
+    // COMPLETE are the only response kinds the current protocol ever sends
+    // unprompted - anything else is guaranteed to be a direct reply - so
+    // classifying by response type is enough here; keep applying and
+    // skipping unsolicited lines until the actual reply arrives.
+    private async Task<SessionResult> ReadCommandReplyAsync(CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            SessionResult result = await ReadAndProcessOneResponseAsync(cancellationToken);
+
+            if (result is not SessionResult.Sent { Response: DeviceResponse.Progress or DeviceResponse.Complete })
+            {
+                return result;
+            }
+        }
+    }
+
+    private async Task<SessionResult> ReadAndProcessOneResponseAsync(CancellationToken cancellationToken)
     {
         try
         {
