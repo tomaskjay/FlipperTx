@@ -8,21 +8,24 @@ A C# WinForms application that simulates clinical control software for a medical
 
 - C# / .NET application development, including WinForms desktop UI
 - Serial hardware communication (`System.IO.Ports`) with real USB hardware
-- A custom line-based command/response protocol, designed and implemented from scratch
+- Network hardware communication (`System.Net.Sockets`) via a second transport implementation, including a standalone TCP device simulator
+- A custom line-based command/response protocol, designed and implemented from scratch, shared across both transports
 - A workflow/state machine enforcing valid operation sequences independent of the UI
 - Automated unit and integration testing, including test doubles for hardware-free testing
 - Incremental, evidence-driven engineering: every architectural decision below was made only after observing real behavior, not assumed in advance
 
 ## Architecture
 
-The solution is split into five projects, each with one narrow responsibility:
+The solution is split into several projects, each with one narrow responsibility:
 
 | Project | Responsibility |
 |---|---|
-| `MedDeviceSim.Communication` | Serial transport (`SerialTransport`, `ITransport`), byte-to-line framing (`LineReader`), and the protocol layer (`DeviceCommand`, `DeviceResponse`) |
+| `MedDeviceSim.Communication` | Serial and TCP transports (`SerialTransport`, `TcpTransport`, `ITransport`), byte-to-line framing (`LineReader`), and the protocol layer (`DeviceCommand`, `DeviceResponse`) |
 | `MedDeviceSim.Workflow` | `TreatmentWorkflow` — a pure, synchronous state machine with no I/O. Fully testable without hardware or a UI. |
 | `MedDeviceSim.Session` | `TreatmentSession` — bridges the workflow to a real transport: sends commands, reads responses, feeds them back into the workflow, translates communication failures into safe state transitions |
 | `MedDeviceSim` | The WinForms UI, built on top of the above. Reflects workflow state; does not itself enforce validity — that's the workflow's job |
+| `MedDeviceSim.Simulator` | `SimulatedDeviceServer` — an independent, stateful implementation of the protocol over TCP, used to test and demonstrate the real application against something that actually speaks it (see [Known limitations](#known-limitations)) |
+| `MedDeviceSim.Simulator.Host` | A minimal standalone console app that runs `SimulatedDeviceServer` as its own process, for manual testing and demonstration against the live UI |
 | `FlipperSerialExperiment` / `RawSerialExperiment` | Early diagnostic console apps used to observe real Flipper Zero serial behavior and debug a suspected `System.IO.Ports` issue before any reusable library code was written |
 
 Dependency direction is strictly one-way: `MedDeviceSim` → `MedDeviceSim.Session` → `MedDeviceSim.Workflow` → `MedDeviceSim.Communication`. Nothing lower in that chain knows anything about the layer above it — `TreatmentWorkflow`, in particular, has zero knowledge that a UI, or even a real transport, exists.
@@ -56,9 +59,10 @@ A custom line-based (`\r\n`-terminated) protocol over the serial connection:
 | `ARM` | `READY` |
 | `START` | `RUNNING`, then `PROGRESS <percent>` (repeated), then `COMPLETE` |
 | `STOP` | `STOPPED` |
+| `GET_STATUS` | *(not implemented anywhere yet — see [Known limitations](#known-limitations))* |
 | any | `ERROR <reason>` |
 
-Unrecognized or malformed lines parse to a distinct `Unknown` response rather than throwing — device output that doesn't match the protocol is treated as an expected possibility, not an exceptional one, since real hardware (see Known Limitations) routinely sends output the protocol doesn't define.
+Unrecognized or malformed lines parse to a distinct `Unknown` response rather than throwing — device output that doesn't match the protocol is treated as an expected possibility, not an exceptional one, since real hardware (see Known Limitations) routinely sends output the protocol doesn't define. See [`docs/protocol-spec.md`](docs/protocol-spec.md) for the full specification, including error format and framing rules.
 
 ## Getting started
 
