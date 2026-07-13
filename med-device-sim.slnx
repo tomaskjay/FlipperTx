@@ -4,6 +4,9 @@
   <Project Path="MedDeviceSim.Communication/MedDeviceSim.Communication.csproj" />
   <Project Path="MedDeviceSim.Session.Tests/MedDeviceSim.Session.Tests.csproj" />
   <Project Path="MedDeviceSim.Session/MedDeviceSim.Session.csproj" />
+  <Project Path="MedDeviceSim.Simulator.Host/MedDeviceSim.Simulator.Host.csproj" />
+  <Project Path="MedDeviceSim.Simulator.Tests/MedDeviceSim.Simulator.Tests.csproj" />
+  <Project Path="MedDeviceSim.Simulator/MedDeviceSim.Simulator.csproj" />
   <Project Path="MedDeviceSim.Workflow.Tests/MedDeviceSim.Workflow.Tests.csproj" />
   <Project Path="MedDeviceSim.Workflow/MedDeviceSim.Workflow.csproj" />
   <Project Path="MedDeviceSim/MedDeviceSim.csproj" />
