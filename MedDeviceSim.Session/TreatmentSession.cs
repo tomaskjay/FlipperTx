@@ -3,7 +3,7 @@ using MedDeviceSim.Workflow;
 
 namespace MedDeviceSim.Session;
 
-// Bridges the pure TreatmentWorkflow to a real SerialTransport. Option A
+// Bridges the pure TreatmentWorkflow to an ITransport. Option A
 // shape (decided explicitly, not defaulted to): one request/response
 // exchange at a time - send a command, read exactly one line back, parse
 // and feed it to the workflow, return. No persistent background read loop;
@@ -16,15 +16,18 @@ namespace MedDeviceSim.Session;
 // "valid-from-exactly-one-state" pattern the other actions share. Left as
 // an explicit gap, not forgotten.
 //
-// Takes ownership of the SerialTransport it's given (disposes it), since
-// this class directs the transport's lifecycle for the life of a session -
-// same reasoning SerialTransport uses for the SerialPort it constructs.
+// Takes ownership of the ITransport it's given (disposes it), since this
+// class directs the transport's lifecycle for the life of a session - same
+// reasoning SerialTransport uses for the SerialPort it constructs.
+//
+// Depends on the ITransport interface, not the concrete SerialTransport -
+// this is what lets a test substitute a fake in place of real hardware.
 public sealed class TreatmentSession : IDisposable
 {
-    private readonly SerialTransport _transport;
+    private readonly ITransport _transport;
     private readonly TreatmentWorkflow _workflow = new();
 
-    public TreatmentSession(SerialTransport transport)
+    public TreatmentSession(ITransport transport)
     {
         _transport = transport;
     }

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace MedDeviceSim.Communication;
 
-public sealed class SerialTransport : IDisposable
+public sealed class SerialTransport : ITransport
 {
     private readonly SerialPort _port;
 
