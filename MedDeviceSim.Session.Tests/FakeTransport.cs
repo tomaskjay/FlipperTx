@@ -8,6 +8,7 @@ namespace MedDeviceSim.Session.Tests;
 public sealed class FakeTransport : ITransport
 {
     private readonly Queue<string> _linesToReturn = new();
+    private Exception? _exceptionToThrowOnNextRead;
 
     public List<string> SentText { get; } = [];
 
@@ -27,6 +28,12 @@ public sealed class FakeTransport : ITransport
 
     public Task<string> ReadLineAsync(CancellationToken cancellationToken = default)
     {
+        if (_exceptionToThrowOnNextRead is { } exception)
+        {
+            _exceptionToThrowOnNextRead = null;
+            throw exception;
+        }
+
         if (_linesToReturn.Count == 0)
         {
             throw new InvalidOperationException("No scripted line available - test forgot to call EnqueueLine.");
@@ -36,6 +43,11 @@ public sealed class FakeTransport : ITransport
     }
 
     public void EnqueueLine(string line) => _linesToReturn.Enqueue(line);
+
+    // Scripts a failure instead of a successful read - simulates timeouts,
+    // I/O errors, or an unexpected disconnect, depending on which exception
+    // type the test passes in.
+    public void ThrowOnNextRead(Exception exception) => _exceptionToThrowOnNextRead = exception;
 
     public void Dispose()
     {
