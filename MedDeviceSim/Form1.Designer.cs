@@ -22,7 +22,10 @@ namespace MedDeviceSim
 
         #region Windows Form Designer generated code
 
+        private System.Windows.Forms.RadioButton serialRadioButton;
+        private System.Windows.Forms.RadioButton tcpRadioButton;
         private System.Windows.Forms.ComboBox portComboBox;
+        private System.Windows.Forms.TextBox tcpPortTextBox;
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Button disconnectButton;
         private System.Windows.Forms.Label transportStatusLabel;
@@ -42,7 +45,10 @@ namespace MedDeviceSim
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            serialRadioButton = new RadioButton();
+            tcpRadioButton = new RadioButton();
             portComboBox = new ComboBox();
+            tcpPortTextBox = new TextBox();
             connectButton = new Button();
             disconnectButton = new Button();
             transportStatusLabel = new Label();
@@ -56,20 +62,53 @@ namespace MedDeviceSim
             eventLogTextBox = new TextBox();
             SuspendLayout();
             //
+            // serialRadioButton
+            //
+            serialRadioButton.AutoSize = true;
+            serialRadioButton.Checked = true;
+            serialRadioButton.Location = new Point(12, 12);
+            serialRadioButton.Name = "serialRadioButton";
+            serialRadioButton.Size = new Size(54, 19);
+            serialRadioButton.TabIndex = 0;
+            serialRadioButton.TabStop = true;
+            serialRadioButton.Text = "Serial";
+            serialRadioButton.UseVisualStyleBackColor = true;
+            serialRadioButton.CheckedChanged += serialRadioButton_CheckedChanged;
+            //
+            // tcpRadioButton
+            //
+            tcpRadioButton.AutoSize = true;
+            tcpRadioButton.Location = new Point(90, 12);
+            tcpRadioButton.Name = "tcpRadioButton";
+            tcpRadioButton.Size = new Size(97, 19);
+            tcpRadioButton.TabIndex = 1;
+            tcpRadioButton.Text = "TCP Simulator";
+            tcpRadioButton.UseVisualStyleBackColor = true;
+            //
             // portComboBox
             //
             portComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            portComboBox.Location = new Point(12, 12);
+            portComboBox.Location = new Point(12, 41);
             portComboBox.Name = "portComboBox";
             portComboBox.Size = new Size(150, 23);
-            portComboBox.TabIndex = 0;
+            portComboBox.TabIndex = 2;
+            //
+            // tcpPortTextBox
+            //
+            tcpPortTextBox.Location = new Point(12, 41);
+            tcpPortTextBox.Name = "tcpPortTextBox";
+            tcpPortTextBox.PlaceholderText = "TCP port";
+            tcpPortTextBox.Size = new Size(150, 23);
+            tcpPortTextBox.TabIndex = 3;
+            tcpPortTextBox.Text = "9000";
+            tcpPortTextBox.Visible = false;
             //
             // connectButton
             //
-            connectButton.Location = new Point(168, 12);
+            connectButton.Location = new Point(168, 41);
             connectButton.Name = "connectButton";
             connectButton.Size = new Size(90, 23);
-            connectButton.TabIndex = 1;
+            connectButton.TabIndex = 4;
             connectButton.Text = "Connect";
             connectButton.UseVisualStyleBackColor = true;
             connectButton.Click += connectButton_Click;
@@ -77,10 +116,10 @@ namespace MedDeviceSim
             // disconnectButton
             //
             disconnectButton.Enabled = false;
-            disconnectButton.Location = new Point(264, 12);
+            disconnectButton.Location = new Point(264, 41);
             disconnectButton.Name = "disconnectButton";
             disconnectButton.Size = new Size(90, 23);
-            disconnectButton.TabIndex = 2;
+            disconnectButton.TabIndex = 5;
             disconnectButton.Text = "Disconnect";
             disconnectButton.UseVisualStyleBackColor = true;
             disconnectButton.Click += disconnectButton_Click;
@@ -88,46 +127,46 @@ namespace MedDeviceSim
             // transportStatusLabel
             //
             transportStatusLabel.AutoSize = true;
-            transportStatusLabel.Location = new Point(12, 50);
+            transportStatusLabel.Location = new Point(12, 79);
             transportStatusLabel.Name = "transportStatusLabel";
             transportStatusLabel.Size = new Size(100, 15);
-            transportStatusLabel.TabIndex = 3;
+            transportStatusLabel.TabIndex = 6;
             transportStatusLabel.Text = "Transport: Closed";
             //
             // stateLabel
             //
             stateLabel.AutoSize = true;
-            stateLabel.Location = new Point(12, 72);
+            stateLabel.Location = new Point(12, 101);
             stateLabel.Name = "stateLabel";
             stateLabel.Size = new Size(114, 15);
-            stateLabel.TabIndex = 4;
+            stateLabel.TabIndex = 7;
             stateLabel.Text = "Workflow: Disconnected";
             //
             // progressBar
             //
-            progressBar.Location = new Point(12, 95);
+            progressBar.Location = new Point(12, 124);
             progressBar.Maximum = 100;
             progressBar.Minimum = 0;
             progressBar.Name = "progressBar";
             progressBar.Size = new Size(342, 20);
-            progressBar.TabIndex = 5;
+            progressBar.TabIndex = 8;
             progressBar.Visible = false;
             //
             // planIdTextBox
             //
-            planIdTextBox.Location = new Point(12, 125);
+            planIdTextBox.Location = new Point(12, 154);
             planIdTextBox.Name = "planIdTextBox";
             planIdTextBox.PlaceholderText = "Plan ID";
             planIdTextBox.Size = new Size(150, 23);
-            planIdTextBox.TabIndex = 6;
+            planIdTextBox.TabIndex = 9;
             //
             // loadPlanButton
             //
             loadPlanButton.Enabled = false;
-            loadPlanButton.Location = new Point(168, 125);
+            loadPlanButton.Location = new Point(168, 154);
             loadPlanButton.Name = "loadPlanButton";
             loadPlanButton.Size = new Size(90, 23);
-            loadPlanButton.TabIndex = 7;
+            loadPlanButton.TabIndex = 10;
             loadPlanButton.Text = "Load Plan";
             loadPlanButton.UseVisualStyleBackColor = true;
             loadPlanButton.Click += loadPlanButton_Click;
@@ -135,10 +174,10 @@ namespace MedDeviceSim
             // armButton
             //
             armButton.Enabled = false;
-            armButton.Location = new Point(12, 155);
+            armButton.Location = new Point(12, 184);
             armButton.Name = "armButton";
             armButton.Size = new Size(80, 23);
-            armButton.TabIndex = 8;
+            armButton.TabIndex = 11;
             armButton.Text = "Arm";
             armButton.UseVisualStyleBackColor = true;
             armButton.Click += armButton_Click;
@@ -146,10 +185,10 @@ namespace MedDeviceSim
             // startButton
             //
             startButton.Enabled = false;
-            startButton.Location = new Point(98, 155);
+            startButton.Location = new Point(98, 184);
             startButton.Name = "startButton";
             startButton.Size = new Size(80, 23);
-            startButton.TabIndex = 9;
+            startButton.TabIndex = 12;
             startButton.Text = "Start";
             startButton.UseVisualStyleBackColor = true;
             startButton.Click += startButton_Click;
@@ -157,10 +196,10 @@ namespace MedDeviceSim
             // stopButton
             //
             stopButton.Enabled = false;
-            stopButton.Location = new Point(184, 155);
+            stopButton.Location = new Point(184, 184);
             stopButton.Name = "stopButton";
             stopButton.Size = new Size(80, 23);
-            stopButton.TabIndex = 10;
+            stopButton.TabIndex = 13;
             stopButton.Text = "Stop";
             stopButton.UseVisualStyleBackColor = true;
             stopButton.Click += stopButton_Click;
@@ -168,19 +207,22 @@ namespace MedDeviceSim
             // eventLogTextBox
             //
             eventLogTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            eventLogTextBox.Location = new Point(12, 190);
+            eventLogTextBox.Location = new Point(12, 219);
             eventLogTextBox.Multiline = true;
             eventLogTextBox.Name = "eventLogTextBox";
             eventLogTextBox.ReadOnly = true;
             eventLogTextBox.ScrollBars = ScrollBars.Vertical;
-            eventLogTextBox.Size = new Size(776, 248);
-            eventLogTextBox.TabIndex = 11;
+            eventLogTextBox.Size = new Size(776, 219);
+            eventLogTextBox.TabIndex = 14;
             //
             // Form1
             //
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(serialRadioButton);
+            Controls.Add(tcpRadioButton);
             Controls.Add(portComboBox);
+            Controls.Add(tcpPortTextBox);
             Controls.Add(connectButton);
             Controls.Add(disconnectButton);
             Controls.Add(transportStatusLabel);
