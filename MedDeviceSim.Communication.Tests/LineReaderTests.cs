@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using MedDeviceSim.Communication;
 
@@ -50,5 +52,39 @@ public class LineReaderTests
         var reader = new LineReader(stream);
 
         await Assert.ThrowsAsync<IOException>(() => reader.ReadLineAsync());
+    }
+
+    // MemoryStream can't reproduce this - it never blocks or times out.
+    // A real loopback socket is needed to prove LineReader actually
+    // survives NetworkStream's read-timeout shape (IOException wrapping a
+    // SocketException) rather than letting it escape as a failure, the
+    // behavior TcpTransport depends on to avoid hanging forever.
+    [Fact]
+    public async Task ReadLineAsync_NoDataWithinReadTimeout_RetriesUntilLineArrives()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        Task<TcpClient> acceptTask = listener.AcceptTcpClientAsync();
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, port);
+        using TcpClient server = await acceptTask;
+
+        NetworkStream clientStream = client.GetStream();
+        clientStream.ReadTimeout = 100;
+        var reader = new LineReader(clientStream);
+
+        // Nothing sent yet - forces ReadLineAsync to hit at least one real
+        // socket read timeout and retry internally before any data exists.
+        Task<string> readTask = reader.ReadLineAsync();
+        await Task.Delay(250);
+        Assert.False(readTask.IsCompleted);
+
+        await server.GetStream().WriteAsync(Encoding.ASCII.GetBytes("help\r\n"));
+
+        string line = await readTask;
+
+        Assert.Equal("help", line);
     }
 }

@@ -86,11 +86,9 @@ The WinForms UI itself has been manually driven and verified against real hardwa
 ## Known limitations
 
 - **`GET_STATUS` is not wired up end-to-end.** `DeviceCommand.GetStatus` exists, but `TreatmentWorkflow` never got a corresponding request method, since a status query doesn't fit the "valid from exactly one state" pattern the other commands share. Not yet resolved.
-- **No protocol-aware simulated device exists yet.** The real Flipper Zero's stock CLI doesn't understand this custom protocol (it was never intended to — see below), and `FakeTransport` only returns pre-scripted responses rather than behaving like a stateful device. As a result, the live UI has never been able to complete a full `Connected → Complete` workflow against anything real — every real-hardware UI test necessarily stops at `Disconnected`, because the stock Flipper CLI responds to `CONNECT` with an unrecognized-command message, not `CONNECTED`.
-- **No TCP/network transport yet.** `ITransport` is designed to support a second implementation, but only `SerialTransport` exists so far.
 - **No formal requirements/protocol/design documentation yet** beyond this README and inline code comments.
 
-The plan to close the middle two items: build a small standalone TCP-based simulator that actually implements this protocol statefully, plus a `TcpTransport` implementing the existing `ITransport` interface — one piece of work that satisfies both the network-interface goal and finally lets the real application complete a full workflow against something real.
+Since the real Flipper Zero's stock CLI doesn't understand this custom protocol, the stock-hardware path can never move past `Connected` (`CONNECT` gets an unrecognized-command reply, not `CONNECTED`). To get a full `Connected → Complete` run against something real, `MedDeviceSim.Simulator` implements the protocol statefully (`SimulatedDeviceServer`, hosted standalone by `MedDeviceSim.Simulator.Host`), paired with `TcpTransport`, a second `ITransport` implementation alongside `SerialTransport`. The WinForms UI now runs a complete workflow — including live `PROGRESS` updates — against this simulator over a real TCP socket.
 
 ## Notable engineering findings along the way
 
