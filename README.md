@@ -1,4 +1,4 @@
-# Medical Device Control Simulator
+# FlipperTx
 
 A C# WinForms application that simulates clinical control software for a medical device, communicating over a real USB serial connection with a Flipper Zero acting as simplified test hardware. Built as a portfolio/learning project to develop C#/.NET, Windows desktop, and serial/network hardware interface skills.
 
