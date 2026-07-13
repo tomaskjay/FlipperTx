@@ -16,6 +16,7 @@ public abstract record DeviceResponse
     public sealed record Running : DeviceResponse;
     public sealed record Progress(int Percent) : DeviceResponse;
     public sealed record Complete : DeviceResponse;
+    public sealed record Stopped : DeviceResponse;
     public sealed record Error(string Reason) : DeviceResponse;
 
     // A line that didn't match any known response shape. Parsing never
@@ -39,6 +40,7 @@ public abstract record DeviceResponse
             "RUNNING" when rest is null => new Running(),
             "PROGRESS" when rest is not null && int.TryParse(rest, out int percent) => new Progress(percent),
             "COMPLETE" when rest is null => new Complete(),
+            "STOPPED" when rest is null => new Stopped(),
             "ERROR" when rest is not null => new Error(rest),
             _ => new Unknown(trimmed),
         };

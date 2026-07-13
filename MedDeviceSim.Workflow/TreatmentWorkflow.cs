@@ -51,6 +51,16 @@ public sealed class TreatmentWorkflow
         return new WorkflowResult.Accepted(new DeviceCommand.Start());
     }
 
+    public WorkflowResult RequestStop()
+    {
+        if (CurrentState is not (TreatmentState.Armed or TreatmentState.Running))
+        {
+            return new WorkflowResult.Rejected($"Cannot stop while {StateName}.");
+        }
+
+        return new WorkflowResult.Accepted(new DeviceCommand.Stop());
+    }
+
     public void OnResponse(DeviceResponse response)
     {
         CurrentState = (CurrentState, response) switch
@@ -73,11 +83,32 @@ public sealed class TreatmentWorkflow
             (TreatmentState.Running running, DeviceResponse.Complete) =>
                 new TreatmentState.Complete(running.PlanId),
 
+            (TreatmentState.Armed armed, DeviceResponse.Stopped) =>
+                new TreatmentState.Stopped(armed.PlanId),
+
+            (TreatmentState.Running running, DeviceResponse.Stopped) =>
+                new TreatmentState.Stopped(running.PlanId),
+
+            // An ERROR response ends the current operation in a defined,
+            // named fault state, from anywhere except Disconnected (there's
+            // nothing to receive a response while disconnected).
+            (not TreatmentState.Disconnected, DeviceResponse.Error error) =>
+                new TreatmentState.Fault(error.Reason),
+
             // A response that doesn't match an expected transition for the
-            // current state is ignored for now - revisit once Fault
-            // handling exists to give this a real, defined outcome.
+            // current state is ignored.
             _ => CurrentState,
         };
+    }
+
+    // A disconnect is not something the device tells us via a parsed
+    // response - by definition, if we're disconnected, no response is
+    // coming. This is a direct, unconditional transition, matching the
+    // requirement that disconnecting immediately forces a safe state
+    // regardless of what was happening.
+    public void OnDisconnected()
+    {
+        CurrentState = new TreatmentState.Disconnected();
     }
 
     private string StateName => CurrentState.GetType().Name;

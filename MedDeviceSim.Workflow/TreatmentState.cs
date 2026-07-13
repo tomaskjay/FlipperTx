@@ -16,4 +16,6 @@ public abstract record TreatmentState
     public sealed record Armed(string PlanId) : TreatmentState;
     public sealed record Running(string PlanId, int PercentComplete) : TreatmentState;
     public sealed record Complete(string PlanId) : TreatmentState;
+    public sealed record Stopped(string PlanId) : TreatmentState;
+    public sealed record Fault(string Reason) : TreatmentState;
 }

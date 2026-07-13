@@ -41,6 +41,12 @@ public class DeviceResponseTests
     }
 
     [Fact]
+    public void Parse_Stopped_ReturnsStopped()
+    {
+        Assert.Equal(new DeviceResponse.Stopped(), DeviceResponse.Parse("STOPPED"));
+    }
+
+    [Fact]
     public void Parse_Error_ReturnsErrorWithReason()
     {
         Assert.Equal(new DeviceResponse.Error("Plan not loaded"), DeviceResponse.Parse("ERROR Plan not loaded"));
@@ -53,6 +59,7 @@ public class DeviceResponseTests
     [InlineData("PROGRESS notanumber")]
     [InlineData("CONNECTED extra")]
     [InlineData("PLAN_LOADED")]
+    [InlineData("STOPPED extra")]
     [InlineData("ERROR")]
     public void Parse_MalformedOrUnrecognizedInput_ReturnsUnknown(string line)
     {

@@ -150,6 +150,124 @@ public class TreatmentWorkflowTests
     }
 
     [Fact]
+    public void RequestStop_WhileArmed_IsAccepted()
+    {
+        var workflow = new TreatmentWorkflow();
+        workflow.OnResponse(new DeviceResponse.Connected());
+        workflow.OnResponse(new DeviceResponse.PlanLoaded("plan-1"));
+        workflow.OnResponse(new DeviceResponse.Ready());
+
+        WorkflowResult result = workflow.RequestStop();
+
+        var accepted = Assert.IsType<WorkflowResult.Accepted>(result);
+        Assert.IsType<DeviceCommand.Stop>(accepted.Command);
+    }
+
+    [Fact]
+    public void RequestStop_WhileRunning_IsAccepted()
+    {
+        var workflow = new TreatmentWorkflow();
+        workflow.OnResponse(new DeviceResponse.Connected());
+        workflow.OnResponse(new DeviceResponse.PlanLoaded("plan-1"));
+        workflow.OnResponse(new DeviceResponse.Ready());
+        workflow.OnResponse(new DeviceResponse.Running());
+
+        WorkflowResult result = workflow.RequestStop();
+
+        Assert.IsType<WorkflowResult.Accepted>(result);
+    }
+
+    [Fact]
+    public void RequestStop_WhileConnected_IsRejected()
+    {
+        var workflow = new TreatmentWorkflow();
+        workflow.OnResponse(new DeviceResponse.Connected());
+
+        WorkflowResult result = workflow.RequestStop();
+
+        Assert.IsType<WorkflowResult.Rejected>(result);
+    }
+
+    [Fact]
+    public void OnResponse_Stopped_WhileArmed_TransitionsToStoppedWithPlanId()
+    {
+        var workflow = new TreatmentWorkflow();
+        workflow.OnResponse(new DeviceResponse.Connected());
+        workflow.OnResponse(new DeviceResponse.PlanLoaded("plan-1"));
+        workflow.OnResponse(new DeviceResponse.Ready());
+
+        workflow.OnResponse(new DeviceResponse.Stopped());
+
+        var state = Assert.IsType<TreatmentState.Stopped>(workflow.CurrentState);
+        Assert.Equal("plan-1", state.PlanId);
+    }
+
+    [Fact]
+    public void OnResponse_Stopped_WhileRunning_TransitionsToStoppedWithPlanId()
+    {
+        var workflow = new TreatmentWorkflow();
+        workflow.OnResponse(new DeviceResponse.Connected());
+        workflow.OnResponse(new DeviceResponse.PlanLoaded("plan-1"));
+        workflow.OnResponse(new DeviceResponse.Ready());
+        workflow.OnResponse(new DeviceResponse.Running());
+
+        workflow.OnResponse(new DeviceResponse.Stopped());
+
+        var state = Assert.IsType<TreatmentState.Stopped>(workflow.CurrentState);
+        Assert.Equal("plan-1", state.PlanId);
+    }
+
+    [Fact]
+    public void OnResponse_Error_WhileRunning_TransitionsToFaultWithReason()
+    {
+        var workflow = new TreatmentWorkflow();
+        workflow.OnResponse(new DeviceResponse.Connected());
+        workflow.OnResponse(new DeviceResponse.PlanLoaded("plan-1"));
+        workflow.OnResponse(new DeviceResponse.Ready());
+        workflow.OnResponse(new DeviceResponse.Running());
+
+        workflow.OnResponse(new DeviceResponse.Error("Overheat detected"));
+
+        var state = Assert.IsType<TreatmentState.Fault>(workflow.CurrentState);
+        Assert.Equal("Overheat detected", state.Reason);
+    }
+
+    [Fact]
+    public void OnResponse_Error_WhileConnected_TransitionsToFault()
+    {
+        var workflow = new TreatmentWorkflow();
+        workflow.OnResponse(new DeviceResponse.Connected());
+
+        workflow.OnResponse(new DeviceResponse.Error("Unexpected state"));
+
+        Assert.IsType<TreatmentState.Fault>(workflow.CurrentState);
+    }
+
+    [Fact]
+    public void OnDisconnected_WhileRunning_ForcesDisconnected()
+    {
+        var workflow = new TreatmentWorkflow();
+        workflow.OnResponse(new DeviceResponse.Connected());
+        workflow.OnResponse(new DeviceResponse.PlanLoaded("plan-1"));
+        workflow.OnResponse(new DeviceResponse.Ready());
+        workflow.OnResponse(new DeviceResponse.Running());
+
+        workflow.OnDisconnected();
+
+        Assert.IsType<TreatmentState.Disconnected>(workflow.CurrentState);
+    }
+
+    [Fact]
+    public void OnDisconnected_WhileAlreadyDisconnected_StaysDisconnected()
+    {
+        var workflow = new TreatmentWorkflow();
+
+        workflow.OnDisconnected();
+
+        Assert.IsType<TreatmentState.Disconnected>(workflow.CurrentState);
+    }
+
+    [Fact]
     public void FullHappyPath_ConnectThroughComplete_EndsInCompleteWithPlanId()
     {
         var workflow = new TreatmentWorkflow();
