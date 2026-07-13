@@ -1,5 +1,7 @@
 <Solution>
   <Project Path="FlipperSerialExperiment/FlipperSerialExperiment.csproj" />
+  <Project Path="MedDeviceSim.Communication.Tests/MedDeviceSim.Communication.Tests.csproj" />
+  <Project Path="MedDeviceSim.Communication/MedDeviceSim.Communication.csproj" />
   <Project Path="MedDeviceSim/MedDeviceSim.csproj" />
   <Project Path="RawSerialExperiment/RawSerialExperiment.csproj" />
 </Solution>
