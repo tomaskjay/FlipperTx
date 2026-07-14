@@ -51,7 +51,9 @@ The solution is split into several projects, each with one narrow responsibility
 
 Dependency direction is strictly one-way: `MedDeviceSim` → `MedDeviceSim.Session` → `MedDeviceSim.Workflow` → `MedDeviceSim.Communication`. Nothing lower in that chain knows anything about the layer above it. `TreatmentWorkflow`, in particular, has zero knowledge that a UI, or even a real transport, exists.
 
-![Hand-drawn diagram of the architecture](docs/images/architecture-diagram.jpg)
+<p align="center">
+  <img src="docs/images/architecture-diagram.jpg" alt="Hand-drawn diagram of the architecture" width="600">
+</p>
 
 ## Workflow / state machine
 
