@@ -42,10 +42,10 @@ The solution is split into several projects, each with one narrow responsibility
 | Project | Responsibility |
 |---|---|
 | `MedDeviceSim.Communication` | Serial and TCP transports (`SerialTransport`, `TcpTransport`, `ITransport`), byte-to-line framing (`LineReader`), and the protocol layer (`DeviceCommand`, `DeviceResponse`) |
-| `MedDeviceSim.Workflow` | `TreatmentWorkflow` — a pure, synchronous state machine with no I/O. Fully testable without hardware or a UI. |
-| `MedDeviceSim.Session` | `TreatmentSession` — bridges the workflow to a real transport: sends commands, reads responses, feeds them back into the workflow, translates communication failures into safe state transitions |
-| `MedDeviceSim` | The WinForms UI, built on top of the above. Reflects workflow state; does not itself enforce validity — that's the workflow's job |
-| `MedDeviceSim.Simulator` | `SimulatedDeviceServer` — an independent, stateful implementation of the protocol over TCP, used to test and demonstrate the real application against something that actually speaks it (see [Known limitations](#known-limitations)) |
+| `MedDeviceSim.Workflow` | `TreatmentWorkflow` - a pure, synchronous state machine with no I/O. Fully testable without hardware or a UI. |
+| `MedDeviceSim.Session` | `TreatmentSession` - bridges the workflow to a real transport: sends commands, reads responses, feeds them back into the workflow, translates communication failures into safe state transitions |
+| `MedDeviceSim` | The WinForms UI, built on top of the above. Reflects workflow state; does not itself enforce validity - that's the workflow's job |
+| `MedDeviceSim.Simulator` | `SimulatedDeviceServer` - an independent, stateful implementation of the protocol over TCP, used to test and demonstrate the real application against something that actually speaks it (see [Known limitations](#known-limitations)) |
 | `MedDeviceSim.Simulator.Host` | A minimal standalone console app that runs `SimulatedDeviceServer` as its own process, for manual testing and demonstration against the live UI |
 | `FlipperSerialExperiment` / `RawSerialExperiment` | Early diagnostic console apps used to observe real Flipper Zero serial behavior and debug a suspected `System.IO.Ports` issue before any reusable library code was written |
 
