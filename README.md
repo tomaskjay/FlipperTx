@@ -1,6 +1,6 @@
 # FlipperTx
 
-A C# WinForms application that simulates clinical control software for a medical device, communicating over a real USB serial connection with a Flipper Zero acting as simplified test hardware. Built as a portfolio/learning project with Claude as a guide to develop C#/.NET, Windows desktop, and serial/network hardware interface skills.
+A C# WinForms application that simulates control software for a medical device, communicating over a real USB serial connection with a Flipper Zero acting as simplified test hardware. Not real clinical software.
 
 ## UI
 
@@ -43,7 +43,7 @@ The solution is split into several projects, each with one narrow responsibility
 | `MedDeviceSim.Workflow` | `TreatmentWorkflow` - a pure, synchronous state machine with no I/O. Fully testable without hardware or a UI. |
 | `MedDeviceSim.Session` | `TreatmentSession` - bridges the workflow to a real transport: sends commands, reads responses, feeds them back into the workflow, translates communication failures into safe state transitions |
 | `MedDeviceSim` | The WinForms UI, built on top of the above. Reflects workflow state; does not itself enforce validity - that's the workflow's job |
-| `MedDeviceSim.Simulator` | `SimulatedDeviceServer` - an independent, stateful implementation of the protocol over TCP, used to test and demonstrate the real application against something that actually speaks it (see [Known limitations](#known-limitations)) |
+| `MedDeviceSim.Simulator` | `SimulatedDeviceServer` - an independent, stateful implementation of the protocol over TCP, used to test and demonstrate the real application against something that actually speaks it (see [Some limitations](#some-limitations)) |
 | `MedDeviceSim.Simulator.Host` | A minimal standalone console app that runs `SimulatedDeviceServer` as its own process, for manual testing and demonstration against the live UI |
 | `FlipperSerialExperiment` / `RawSerialExperiment` | Early diagnostic console apps used to observe real Flipper Zero serial behavior and debug a suspected `System.IO.Ports` issue before any reusable library code was written |
 
@@ -82,10 +82,10 @@ A custom line-based (`\r\n`-terminated) protocol over the serial connection:
 | `ARM` | `READY` |
 | `START` | `RUNNING`, then `PROGRESS <percent>` (repeated), then `COMPLETE` |
 | `STOP` | `STOPPED` |
-| `GET_STATUS` | *(not implemented anywhere yet; see [Known limitations](#known-limitations))* |
+| `GET_STATUS` | *(not implemented anywhere yet; see [Some limitations](#some-limitations))* |
 | any | `ERROR <reason>` |
 
-Unrecognized or malformed lines parse to a distinct `Unknown` response rather than throwing. Device output that doesn't match the protocol is treated as an expected possibility, not an exceptional one, since real hardware (see Known Limitations) routinely sends output the protocol doesn't define. See [`docs/protocol-spec.md`](docs/protocol-spec.md) for the full specification, including error format and framing rules.
+Unrecognized or malformed lines parse to a distinct `Unknown` response rather than throwing. Device output that doesn't match the protocol is treated as an expected possibility, not an exceptional one, since real hardware (see Some Limitations) routinely sends output the protocol doesn't define. See [`docs/protocol-spec.md`](docs/protocol-spec.md) for the full specification, including error format and framing rules.
 
 ## Getting started
 
@@ -115,7 +115,9 @@ The WinForms UI itself has been manually driven and verified against real hardwa
 - **`GET_STATUS` is not wired up end-to-end.** `DeviceCommand.GetStatus` exists, but `TreatmentWorkflow` never got a corresponding request method, since a status query doesn't fit the "valid from exactly one state" pattern the other commands share. Not yet resolved.
 - **Formal design documentation is still in progress.** See [Documentation](#documentation) below for what exists so far.
 
-Since the real Flipper Zero's stock CLI doesn't understand this custom protocol, the stock-hardware path can never move past `Connected` (`CONNECT` gets an unrecognized-command reply, not `CONNECTED`). To get a full `Connected → Complete` run against something real, `MedDeviceSim.Simulator` implements the protocol statefully (`SimulatedDeviceServer`, hosted standalone by `MedDeviceSim.Simulator.Host`), paired with `TcpTransport`, a second `ITransport` implementation alongside `SerialTransport`. The WinForms UI now runs a complete workflow, including live `PROGRESS` updates, against this simulator over a real TCP socket.
+Since the real Flipper Zero's stock CLI doesn't understand this custom protocol, the stock-hardware path can never move from `Disconnected` to `Connected` (`CONNECT` gets an unrecognized-command reply, not `CONNECTED`). What actually works with the Flipper is that the COM port opens, DTR gets asserted, and bytes move both directions. To get a full `Connected → Complete` run against something real, `MedDeviceSim.Simulator` implements the protocol statefully (`SimulatedDeviceServer`, hosted standalone by `MedDeviceSim.Simulator.Host`), paired with `TcpTransport`, a second `ITransport` implementation alongside `SerialTransport`. The WinForms UI now runs a complete workflow, including live `PROGRESS` updates, against this simulator over a real TCP socket.
+
+Built as a portfolio/learning project with Claude as a guide to develop C#/.NET, Windows desktop, and serial/network hardware interface skills.
 
 ## Documentation
 

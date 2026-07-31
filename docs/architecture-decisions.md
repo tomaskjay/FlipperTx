@@ -3,9 +3,9 @@
 Why the codebase is shaped the way it is, consolidated into one place. Most
 of these decisions already exist as comments at their point of use; this
 document pulls them together with the reasoning that connects them, in
-roughly the order they were made. See the README's "Notable engineering
-findings" section for the underlying hardware/runtime discoveries some of
-these decisions are built on (DTR gating, `SerialStream` cancellation).
+roughly the order they were made. See the README's "Some findings" section
+for the underlying hardware/runtime discoveries some of these decisions are
+built on (DTR gating, `SerialStream` cancellation).
 
 ## D1 — Layered library split, one-way dependency
 
